@@ -1,0 +1,32 @@
+---
+networks:
+  my-bridge:
+
+services:
+  worker1:
+    image: worker1
+    env_file: "./work.env"
+    networks:
+      - my-bridge
+
+  worker2:
+    image: worker1
+    env_file: "./work.env"
+    networks:
+      - my-bridge
+
+  worker3:
+    image: worker1
+    env_file: "./work.env"
+    networks:
+      - my-bridge
+
+
+  manager:
+    image: manager
+    env_file: 
+     - "manag.env"
+    ports:
+      - "${MANAGER_PORTS}"
+    networks:
+      - my-bridge
