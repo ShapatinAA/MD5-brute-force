@@ -1,0 +1,5 @@
+C:/Users/Contarr/Desktop/ParallelProject/manager/cmake-build-debug-visual-studio/CMakeFiles/ParallelSystems.dir
+C:/Users/Contarr/Desktop/ParallelProject/manager/cmake-build-debug-visual-studio/CMakeFiles/ALL_BUILD.dir
+C:/Users/Contarr/Desktop/ParallelProject/manager/cmake-build-debug-visual-studio/CMakeFiles/ZERO_CHECK.dir
+C:/Users/Contarr/Desktop/ParallelProject/manager/cmake-build-debug-visual-studio/test/CMakeFiles/ParallelSystems_test.dir
+C:/Users/Contarr/Desktop/ParallelProject/manager/cmake-build-debug-visual-studio/test/CMakeFiles/ALL_BUILD.dir

@@ -25,7 +25,7 @@ services:
   manager:
     image: manager
     env_file: 
-     - "manag.env"
+     - "./manag.env"
     ports:
       - "${MANAGER_PORTS}"
     networks:

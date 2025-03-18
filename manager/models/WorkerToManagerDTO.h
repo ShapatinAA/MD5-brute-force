@@ -12,14 +12,15 @@ using namespace std;
 struct WorkerToManagerDTO {
 
 private:
-    string requestId;
-    int partNumber;
+    string request_id;
+    int part_number;
     vector<string> answer;
 
 public:
 
-    WorkerToManagerDTO(const Json::Value &json) :
-        requestId(json["RequestId"].asString()), partNumber(json["PartNumber"].asInt())
+    WorkerToManagerDTO(const Json::Value &json)
+        : request_id(json["RequestId"].asString()),
+          part_number(json["PartNumber"].asInt())
     {
         for (auto word : json["Answer"]) {
             answer.push_back(word.asString());
@@ -28,14 +29,14 @@ public:
 
     WorkerToManagerDTO() = default;
 
-    WorkerToManagerDTO(const string &requestId,
-                          const int &partNumber,
-                          const vector<string> &answer) :
-    requestId(requestId), partNumber(partNumber), answer(answer) {}
+    WorkerToManagerDTO(const string &request_id,
+                       const int &part_number,
+                       const vector<string> &answer)
+        : request_id(request_id), part_number(part_number), answer(answer) {}
 
-    string getRequestId() {return requestId; }
+    string getRequestId() const {return request_id; }
 
-    int getPartNumber() { return partNumber; }
+    int getPartNumber() const { return part_number; }
 
-    vector<string> getAnswer() { return answer; }
+    vector<string> getAnswer() const { return answer; }
 };

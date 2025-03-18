@@ -16,27 +16,35 @@ using namespace std;
 
 struct ManagerToWorkerDTO {
 private:
-    string requestId;
-    int partNumber;
-    int partCount;
+    string request_id;
+    int part_number;
+    int part_count;
     string hash;
-    int maxLength;
+    int max_length;
     vector<string> alphabet;
 public:
 
     ManagerToWorkerDTO() = default;
 
-    ManagerToWorkerDTO(const string &requestId,
-                          const int &partNumber,
-                          const int &partCount,
-                          const string &hash,
-                          const int &maxLength,
-                          const vector<string> &alphabet) :
-    requestId(requestId), partNumber(partNumber), partCount(partCount), hash(hash), maxLength(maxLength), alphabet(alphabet) {}
+    ManagerToWorkerDTO(const string &request_id,
+                       const int &part_number,
+                       const int &part_count,
+                       const string &hash,
+                       const int &max_length,
+                       const vector<string> &alphabet)
+        : request_id(request_id),
+          part_number(part_number),
+          part_count(part_count),
+          hash(hash),
+          max_length(max_length),
+          alphabet(alphabet) {}
 
-    ManagerToWorkerDTO(const Json::Value &json) :
-    requestId(json["RequestId"].asString()), partNumber(json["PartNumber"].asInt()), partCount(json["PartCount"].asInt()),
-    hash(json["Hash"].asString()), maxLength(json["MaxLength"].asInt()) {
+    ManagerToWorkerDTO(const Json::Value &json)
+        : request_id(json["RequestId"].asString()),
+          part_number(json["PartNumber"].asInt()),
+          part_count(json["PartCount"].asInt()),
+          hash(json["Hash"].asString()),
+          max_length(json["MaxLength"].asInt()) {
         for (auto letter : json["Alphabet"]) {
             alphabet.push_back(letter.asString());
         }
@@ -55,11 +63,11 @@ public:
         return true;
     }
 
-    string getRequestId() {return requestId;}
-    int getPartNumber() {return partNumber;}
-    int getPartCount() {return partCount;}
-    string getHash() {return hash;}
-    int getMaxLength() {return maxLength;}
+    string getRequestId() const {return request_id;}
+    int getPartNumber() const {return part_number;}
+    int getPartCount() const {return part_count;}
+    string getHash() const {return hash;}
+    int getMaxLength() const {return max_length;}
     vector<string> getAlphabet() const {return alphabet;}
 };
 

@@ -1,0 +1,610 @@
+
+---
+events:
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Program Files/JetBrains/CLion 2024.3.1.1/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeDetermineSystem.cmake:205 (message)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      The system is: Windows - 10.0.19045 - AMD64
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Program Files/JetBrains/CLion 2024.3.1.1/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "C:/Program Files/JetBrains/CLion 2024.3.1.1/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "C:/Program Files/JetBrains/CLion 2024.3.1.1/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeDetermineCXXCompiler.cmake:126 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" succeeded.
+      Compiler:  
+      Build flags: 
+      Id flags:  
+      
+      The output was:
+      0
+      Microsoft (R) Build Engine версии 16.4.0+e901037fe для .NET Framework
+      (C) Корпорация Майкрософт (Microsoft Corporation). Все права защищены.
+      
+      Сборка начата 18.03.2025 23:23:16.
+      Проект "C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\3.30.5\\CompilerIdCXX\\CompilerIdCXX.vcxproj" в узле 1 (целевые объекты по умолчанию).
+      PrepareForBuild:
+        Создание каталога "Debug\\".
+        Создание каталога "Debug\\CompilerIdCXX.tlog\\".
+      InitializeBuildStatus:
+        Создание "Debug\\CompilerIdCXX.tlog\\unsuccessfulbuild", так как было задано "AlwaysCreate".
+      ClCompile:
+        D:\\vs\\community\\VC\\Tools\\MSVC\\14.24.28314\\bin\\HostX64\\x64\\CL.exe /c /nologo /W0 /WX- /diagnostics:column /Od /D _MBCS /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"Debug\\\\" /Fd"Debug\\vc142.pdb" /Gd /TP /FC /errorReport:queue CMakeCXXCompilerId.cpp
+        CMakeCXXCompilerId.cpp
+      Link:
+        D:\\vs\\community\\VC\\Tools\\MSVC\\14.24.28314\\bin\\HostX64\\x64\\link.exe /ERRORREPORT:QUEUE /OUT:".\\CompilerIdCXX.exe" /INCREMENTAL:NO /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /PDB:".\\CompilerIdCXX.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:".\\CompilerIdCXX.lib" /MACHINE:X64 Debug\\CMakeCXXCompilerId.obj
+        CompilerIdCXX.vcxproj -> C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\3.30.5\\CompilerIdCXX\\.\\CompilerIdCXX.exe
+      PostBuildEvent:
+        for %%i in (cl.exe) do @echo CMAKE_CXX_COMPILER=%%~$PATH:i
+        :VCEnd
+        CMAKE_CXX_COMPILER=D:\\vs\\community\\VC\\Tools\\MSVC\\14.24.28314\\bin\\Hostx64\\x64\\cl.exe
+      FinalizeBuildStatus:
+        Файл "Debug\\CompilerIdCXX.tlog\\unsuccessfulbuild" удаляется.
+        Обращение к "Debug\\CompilerIdCXX.tlog\\CompilerIdCXX.lastbuildstate".
+      Сборка проекта "C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\3.30.5\\CompilerIdCXX\\CompilerIdCXX.vcxproj" завершена (целевые объекты по умолчанию).
+      
+      Сборка успешно завершена.
+          Предупреждений: 0
+          Ошибок: 0
+      
+      Прошло времени 00:00:04.53
+      
+      
+      Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "CompilerIdCXX.exe"
+      
+      Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "CompilerIdCXX.vcxproj"
+      
+      The CXX compiler identification is MSVC, found in:
+        C:/Users/Contarr/Desktop/ParallelProject/manager/cmake-build-debug-visual-studio/CMakeFiles/3.30.5/CompilerIdCXX/CompilerIdCXX.exe
+      
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Program Files/JetBrains/CLion 2024.3.1.1/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeDetermineCompilerABI.cmake:74 (try_compile)"
+      - "C:/Program Files/JetBrains/CLion 2024.3.1.1/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:2 (project)"
+    checks:
+      - "Detecting CXX compiler ABI info"
+    directories:
+      source: "C:/Users/Contarr/Desktop/ParallelProject/manager/cmake-build-debug-visual-studio/CMakeFiles/CMakeScratch/TryCompile-od8ql6"
+      binary: "C:/Users/Contarr/Desktop/ParallelProject/manager/cmake-build-debug-visual-studio/CMakeFiles/CMakeScratch/TryCompile-od8ql6"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: "/DWIN32 /D_WINDOWS /W3 /GR /EHsc"
+      CMAKE_CXX_SCAN_FOR_MODULES: "OFF"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+    buildResult:
+      variable: "CMAKE_CXX_ABI_COMPILED"
+      cached: true
+      stdout: |
+        Change Dir: 'C:/Users/Contarr/Desktop/ParallelProject/manager/cmake-build-debug-visual-studio/CMakeFiles/CMakeScratch/TryCompile-od8ql6'
+        
+        Run Build Command(s): D:/vs/community/MSBuild/Current/Bin/MSBuild.exe cmTC_ab9f4.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=16.0 /v:n
+        Microsoft (R) Build Engine версии 16.4.0+e901037fe для .NET Framework
+        (C) Корпорация Майкрософт (Microsoft Corporation). Все права защищены.
+        
+        Сборка начата 18.03.2025 23:23:22.
+        Проект "C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-od8ql6\\cmTC_ab9f4.vcxproj" в узле 1 (целевые объекты по умолчанию).
+        PrepareForBuild:
+          Создание каталога "cmTC_ab9f4.dir\\Debug\\".
+          Создание каталога "C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-od8ql6\\Debug\\".
+          Создание каталога "cmTC_ab9f4.dir\\Debug\\cmTC_ab9f4.tlog\\".
+        InitializeBuildStatus:
+          Создание "cmTC_ab9f4.dir\\Debug\\cmTC_ab9f4.tlog\\unsuccessfulbuild", так как было задано "AlwaysCreate".
+        ClCompile:
+          D:\\vs\\community\\VC\\Tools\\MSVC\\14.24.28314\\bin\\HostX64\\x64\\CL.exe /c /Zi /W3 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_ab9f4.dir\\Debug\\\\" /Fd"cmTC_ab9f4.dir\\Debug\\vc142.pdb" /Gd /TP /errorReport:queue "C:\\Program Files\\JetBrains\\CLion 2024.3.1.1\\bin\\cmake\\win\\x64\\share\\cmake-3.30\\Modules\\CMakeCXXCompilerABI.cpp"
+          Оптимизирующий компилятор Microsoft (R) C/C++ версии 19.24.28316 для x64
+          CMakeCXXCompilerABI.cpp
+          (C) Корпорация Майкрософт (Microsoft Corporation).  Все права защищены.
+          cl /c /Zi /W3 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_ab9f4.dir\\Debug\\\\" /Fd"cmTC_ab9f4.dir\\Debug\\vc142.pdb" /Gd /TP /errorReport:queue "C:\\Program Files\\JetBrains\\CLion 2024.3.1.1\\bin\\cmake\\win\\x64\\share\\cmake-3.30\\Modules\\CMakeCXXCompilerABI.cpp"
+        Link:
+          D:\\vs\\community\\VC\\Tools\\MSVC\\14.24.28314\\bin\\HostX64\\x64\\link.exe /ERRORREPORT:QUEUE /OUT:"C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-od8ql6\\Debug\\cmTC_ab9f4.exe" /INCREMENTAL /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG:FASTLINK /PDB:"C:/Users/Contarr/Desktop/ParallelProject/manager/cmake-build-debug-visual-studio/CMakeFiles/CMakeScratch/TryCompile-od8ql6/Debug/cmTC_ab9f4.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:/Users/Contarr/Desktop/ParallelProject/manager/cmake-build-debug-visual-studio/CMakeFiles/CMakeScratch/TryCompile-od8ql6/Debug/cmTC_ab9f4.lib" /MACHINE:X64  /machine:x64 cmTC_ab9f4.dir\\Debug\\CMakeCXXCompilerABI.obj
+          cmTC_ab9f4.vcxproj -> C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-od8ql6\\Debug\\cmTC_ab9f4.exe
+        FinalizeBuildStatus:
+          Файл "cmTC_ab9f4.dir\\Debug\\cmTC_ab9f4.tlog\\unsuccessfulbuild" удаляется.
+          Обращение к "cmTC_ab9f4.dir\\Debug\\cmTC_ab9f4.tlog\\cmTC_ab9f4.lastbuildstate".
+        Сборка проекта "C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-od8ql6\\cmTC_ab9f4.vcxproj" завершена (целевые объекты по умолчанию).
+        
+        Сборка успешно завершена.
+            Предупреждений: 0
+            Ошибок: 0
+        
+        Прошло времени 00:00:01.17
+        
+      exitCode: 0
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Program Files/JetBrains/CLion 2024.3.1.1/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeDetermineCompilerABI.cmake:218 (message)"
+      - "C:/Program Files/JetBrains/CLion 2024.3.1.1/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      Parsed CXX implicit link information:
+        link line regex: [^( *|.*[/\\])(ld[0-9]*(\\.[a-z]+)?|link\\.exe|lld-link(\\.exe)?|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\\]+-)?ld|collect2)[^/\\]*( |$)]
+        linker tool regex: [^[ 	]*(->|")?[ 	]*(([^"]*[/\\])?(ld[0-9]*(\\.[a-z]+)?|link\\.exe|lld-link(\\.exe)?))("|,| |$)]
+        linker tool for 'CXX': D:/vs/community/VC/Tools/MSVC/14.24.28314/bin/HostX64/x64/link.exe
+        implicit libs: []
+        implicit objs: []
+        implicit dirs: []
+        implicit fwks: []
+      
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Program Files/JetBrains/CLion 2024.3.1.1/bin/cmake/win/x64/share/cmake-3.30/Modules/Internal/CMakeDetermineLinkerId.cmake:40 (message)"
+      - "C:/Program Files/JetBrains/CLion 2024.3.1.1/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeDetermineCompilerABI.cmake:255 (cmake_determine_linker_id)"
+      - "C:/Program Files/JetBrains/CLion 2024.3.1.1/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      Running the CXX compiler's linker: "D:/vs/community/VC/Tools/MSVC/14.24.28314/bin/HostX64/x64/link.exe" "-v"
+      Microsoft (R) Incremental Linker Version 14.24.28316.0
+      Copyright (C) Microsoft Corporation.  All rights reserved.
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Program Files/JetBrains/CLion 2024.3.1.1/bin/cmake/win/x64/share/cmake-3.30/Modules/CheckIncludeFileCXX.cmake:89 (try_compile)"
+      - "CMakeLists.txt:6 (check_include_file_cxx)"
+    checks:
+      - "Looking for C++ include any"
+    directories:
+      source: "C:/Users/Contarr/Desktop/ParallelProject/manager/cmake-build-debug-visual-studio/CMakeFiles/CMakeScratch/TryCompile-sq628v"
+      binary: "C:/Users/Contarr/Desktop/ParallelProject/manager/cmake-build-debug-visual-studio/CMakeFiles/CMakeScratch/TryCompile-sq628v"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: "/DWIN32 /D_WINDOWS /W3 /GR /EHsc"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+    buildResult:
+      variable: "HAS_ANY"
+      cached: true
+      stdout: |
+        Change Dir: 'C:/Users/Contarr/Desktop/ParallelProject/manager/cmake-build-debug-visual-studio/CMakeFiles/CMakeScratch/TryCompile-sq628v'
+        
+        Run Build Command(s): D:/vs/community/MSBuild/Current/Bin/MSBuild.exe cmTC_8e473.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=16.0 /v:n
+        Microsoft (R) Build Engine версии 16.4.0+e901037fe для .NET Framework
+        (C) Корпорация Майкрософт (Microsoft Corporation). Все права защищены.
+        
+        Сборка начата 18.03.2025 23:23:23.
+        Проект "C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-sq628v\\cmTC_8e473.vcxproj" в узле 1 (целевые объекты по умолчанию).
+        PrepareForBuild:
+          Создание каталога "cmTC_8e473.dir\\Debug\\".
+          Создание каталога "C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-sq628v\\Debug\\".
+          Создание каталога "cmTC_8e473.dir\\Debug\\cmTC_8e473.tlog\\".
+        InitializeBuildStatus:
+          Создание "cmTC_8e473.dir\\Debug\\cmTC_8e473.tlog\\unsuccessfulbuild", так как было задано "AlwaysCreate".
+        ClCompile:
+          D:\\vs\\community\\VC\\Tools\\MSVC\\14.24.28314\\bin\\HostX64\\x64\\CL.exe /c /Zi /W3 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_8e473.dir\\Debug\\\\" /Fd"cmTC_8e473.dir\\Debug\\vc142.pdb" /Gd /TP /errorReport:queue "C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-sq628v\\CheckIncludeFile.cxx"
+          Оптимизирующий компилятор Microsoft (R) C/C++ версии 19.24.28316 для x64
+          CheckIncludeFile.cxx
+          (C) Корпорация Майкрософт (Microsoft Corporation).  Все права защищены.
+          cl /c /Zi /W3 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_8e473.dir\\Debug\\\\" /Fd"cmTC_8e473.dir\\Debug\\vc142.pdb" /Gd /TP /errorReport:queue "C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-sq628v\\CheckIncludeFile.cxx"
+          class any is only available with C++17 or later.
+        Link:
+          D:\\vs\\community\\VC\\Tools\\MSVC\\14.24.28314\\bin\\HostX64\\x64\\link.exe /ERRORREPORT:QUEUE /OUT:"C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-sq628v\\Debug\\cmTC_8e473.exe" /INCREMENTAL /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG:FASTLINK /PDB:"C:/Users/Contarr/Desktop/ParallelProject/manager/cmake-build-debug-visual-studio/CMakeFiles/CMakeScratch/TryCompile-sq628v/Debug/cmTC_8e473.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:/Users/Contarr/Desktop/ParallelProject/manager/cmake-build-debug-visual-studio/CMakeFiles/CMakeScratch/TryCompile-sq628v/Debug/cmTC_8e473.lib" /MACHINE:X64  /machine:x64 cmTC_8e473.dir\\Debug\\CheckIncludeFile.obj
+          cmTC_8e473.vcxproj -> C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-sq628v\\Debug\\cmTC_8e473.exe
+        FinalizeBuildStatus:
+          Файл "cmTC_8e473.dir\\Debug\\cmTC_8e473.tlog\\unsuccessfulbuild" удаляется.
+          Обращение к "cmTC_8e473.dir\\Debug\\cmTC_8e473.tlog\\cmTC_8e473.lastbuildstate".
+        Сборка проекта "C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-sq628v\\cmTC_8e473.vcxproj" завершена (целевые объекты по умолчанию).
+        
+        Сборка успешно завершена.
+            Предупреждений: 0
+            Ошибок: 0
+        
+        Прошло времени 00:00:01.09
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Program Files/JetBrains/CLion 2024.3.1.1/bin/cmake/win/x64/share/cmake-3.30/Modules/CheckIncludeFileCXX.cmake:89 (try_compile)"
+      - "CMakeLists.txt:7 (check_include_file_cxx)"
+    checks:
+      - "Looking for C++ include string_view"
+    directories:
+      source: "C:/Users/Contarr/Desktop/ParallelProject/manager/cmake-build-debug-visual-studio/CMakeFiles/CMakeScratch/TryCompile-5j31qt"
+      binary: "C:/Users/Contarr/Desktop/ParallelProject/manager/cmake-build-debug-visual-studio/CMakeFiles/CMakeScratch/TryCompile-5j31qt"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: "/DWIN32 /D_WINDOWS /W3 /GR /EHsc"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+    buildResult:
+      variable: "HAS_STRING_VIEW"
+      cached: true
+      stdout: |
+        Change Dir: 'C:/Users/Contarr/Desktop/ParallelProject/manager/cmake-build-debug-visual-studio/CMakeFiles/CMakeScratch/TryCompile-5j31qt'
+        
+        Run Build Command(s): D:/vs/community/MSBuild/Current/Bin/MSBuild.exe cmTC_dbb99.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=16.0 /v:n
+        Microsoft (R) Build Engine версии 16.4.0+e901037fe для .NET Framework
+        (C) Корпорация Майкрософт (Microsoft Corporation). Все права защищены.
+        
+        Сборка начата 18.03.2025 23:23:25.
+        Проект "C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-5j31qt\\cmTC_dbb99.vcxproj" в узле 1 (целевые объекты по умолчанию).
+        PrepareForBuild:
+          Создание каталога "cmTC_dbb99.dir\\Debug\\".
+          Создание каталога "C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-5j31qt\\Debug\\".
+          Создание каталога "cmTC_dbb99.dir\\Debug\\cmTC_dbb99.tlog\\".
+        InitializeBuildStatus:
+          Создание "cmTC_dbb99.dir\\Debug\\cmTC_dbb99.tlog\\unsuccessfulbuild", так как было задано "AlwaysCreate".
+        ClCompile:
+          D:\\vs\\community\\VC\\Tools\\MSVC\\14.24.28314\\bin\\HostX64\\x64\\CL.exe /c /Zi /W3 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_dbb99.dir\\Debug\\\\" /Fd"cmTC_dbb99.dir\\Debug\\vc142.pdb" /Gd /TP /errorReport:queue "C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-5j31qt\\CheckIncludeFile.cxx"
+          Оптимизирующий компилятор Microsoft (R) C/C++ версии 19.24.28316 для x64
+          CheckIncludeFile.cxx
+          (C) Корпорация Майкрософт (Microsoft Corporation).  Все права защищены.
+          cl /c /Zi /W3 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_dbb99.dir\\Debug\\\\" /Fd"cmTC_dbb99.dir\\Debug\\vc142.pdb" /Gd /TP /errorReport:queue "C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-5j31qt\\CheckIncludeFile.cxx"
+          string_view is only available with C++17 or later.
+        Link:
+          D:\\vs\\community\\VC\\Tools\\MSVC\\14.24.28314\\bin\\HostX64\\x64\\link.exe /ERRORREPORT:QUEUE /OUT:"C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-5j31qt\\Debug\\cmTC_dbb99.exe" /INCREMENTAL /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG:FASTLINK /PDB:"C:/Users/Contarr/Desktop/ParallelProject/manager/cmake-build-debug-visual-studio/CMakeFiles/CMakeScratch/TryCompile-5j31qt/Debug/cmTC_dbb99.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:/Users/Contarr/Desktop/ParallelProject/manager/cmake-build-debug-visual-studio/CMakeFiles/CMakeScratch/TryCompile-5j31qt/Debug/cmTC_dbb99.lib" /MACHINE:X64  /machine:x64 cmTC_dbb99.dir\\Debug\\CheckIncludeFile.obj
+          cmTC_dbb99.vcxproj -> C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-5j31qt\\Debug\\cmTC_dbb99.exe
+        FinalizeBuildStatus:
+          Файл "cmTC_dbb99.dir\\Debug\\cmTC_dbb99.tlog\\unsuccessfulbuild" удаляется.
+          Обращение к "cmTC_dbb99.dir\\Debug\\cmTC_dbb99.tlog\\cmTC_dbb99.lastbuildstate".
+        Сборка проекта "C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-5j31qt\\cmTC_dbb99.vcxproj" завершена (целевые объекты по умолчанию).
+        
+        Сборка успешно завершена.
+            Предупреждений: 0
+            Ошибок: 0
+        
+        Прошло времени 00:00:01.13
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Program Files/JetBrains/CLion 2024.3.1.1/bin/cmake/win/x64/share/cmake-3.30/Modules/CheckIncludeFileCXX.cmake:89 (try_compile)"
+      - "CMakeLists.txt:8 (check_include_file_cxx)"
+    checks:
+      - "Looking for C++ include coroutine"
+    directories:
+      source: "C:/Users/Contarr/Desktop/ParallelProject/manager/cmake-build-debug-visual-studio/CMakeFiles/CMakeScratch/TryCompile-6uut68"
+      binary: "C:/Users/Contarr/Desktop/ParallelProject/manager/cmake-build-debug-visual-studio/CMakeFiles/CMakeScratch/TryCompile-6uut68"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: "/DWIN32 /D_WINDOWS /W3 /GR /EHsc"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+    buildResult:
+      variable: "HAS_COROUTINE"
+      cached: true
+      stdout: |
+        Change Dir: 'C:/Users/Contarr/Desktop/ParallelProject/manager/cmake-build-debug-visual-studio/CMakeFiles/CMakeScratch/TryCompile-6uut68'
+        
+        Run Build Command(s): D:/vs/community/MSBuild/Current/Bin/MSBuild.exe cmTC_2c8e4.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=16.0 /v:n
+        Microsoft (R) Build Engine версии 16.4.0+e901037fe для .NET Framework
+        (C) Корпорация Майкрософт (Microsoft Corporation). Все права защищены.
+        
+        Сборка начата 18.03.2025 23:23:26.
+        Проект "C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-6uut68\\cmTC_2c8e4.vcxproj" в узле 1 (целевые объекты по умолчанию).
+        PrepareForBuild:
+          Создание каталога "cmTC_2c8e4.dir\\Debug\\".
+          Создание каталога "C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-6uut68\\Debug\\".
+          Создание каталога "cmTC_2c8e4.dir\\Debug\\cmTC_2c8e4.tlog\\".
+        InitializeBuildStatus:
+          Создание "cmTC_2c8e4.dir\\Debug\\cmTC_2c8e4.tlog\\unsuccessfulbuild", так как было задано "AlwaysCreate".
+        ClCompile:
+          D:\\vs\\community\\VC\\Tools\\MSVC\\14.24.28314\\bin\\HostX64\\x64\\CL.exe /c /Zi /W3 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_2c8e4.dir\\Debug\\\\" /Fd"cmTC_2c8e4.dir\\Debug\\vc142.pdb" /Gd /TP /errorReport:queue "C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-6uut68\\CheckIncludeFile.cxx"
+          Оптимизирующий компилятор Microsoft (R) C/C++ версии 19.24.28316 для x64
+          CheckIncludeFile.cxx
+          (C) Корпорация Майкрософт (Microsoft Corporation).  Все права защищены.
+          cl /c /Zi /W3 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_2c8e4.dir\\Debug\\\\" /Fd"cmTC_2c8e4.dir\\Debug\\vc142.pdb" /Gd /TP /errorReport:queue "C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-6uut68\\CheckIncludeFile.cxx"
+        C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-6uut68\\CheckIncludeFile.cxx(1,10): fatal error C1083: Не удается открыть файл включение: coroutine: No such file or directory, [C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-6uut68\\cmTC_2c8e4.vcxproj]
+        Сборка проекта "C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-6uut68\\cmTC_2c8e4.vcxproj" завершена (целевые объекты по умолчанию) с ошибкой.
+        
+        Ошибка сборки.
+        
+        "C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-6uut68\\cmTC_2c8e4.vcxproj" (целевой объект по умолчанию) (1) ->
+        (Целевой объект ClCompile) -> 
+          C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-6uut68\\CheckIncludeFile.cxx(1,10): fatal error C1083: Не удается открыть файл включение: coroutine: No such file or directory, [C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-6uut68\\cmTC_2c8e4.vcxproj]
+        
+            Предупреждений: 0
+            Ошибок: 1
+        
+        Прошло времени 00:00:00.90
+        
+      exitCode: 1
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Program Files/JetBrains/CLion 2024.3.1.1/bin/cmake/win/x64/share/cmake-3.30/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "C:/Program Files/JetBrains/CLion 2024.3.1.1/bin/cmake/win/x64/share/cmake-3.30/Modules/CheckCXXSourceCompiles.cmake:52 (cmake_check_source_compiles)"
+      - "C:/Program Files/JetBrains/CLion 2024.3.1.1/bin/cmake/win/x64/share/cmake-3.30/Modules/FindThreads.cmake:99 (CHECK_CXX_SOURCE_COMPILES)"
+      - "C:/Program Files/JetBrains/CLion 2024.3.1.1/bin/cmake/win/x64/share/cmake-3.30/Modules/FindThreads.cmake:163 (_threads_check_libc)"
+      - "C:/Program Files/JetBrains/CLion 2024.3.1.1/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeFindDependencyMacro.cmake:76 (find_package)"
+      - "C:/vcpkg/installed/x64-windows/share/trantor/TrantorConfig.cmake:48 (find_dependency)"
+      - "C:/Program Files/JetBrains/CLion 2024.3.1.1/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeFindDependencyMacro.cmake:76 (find_package)"
+      - "C:/vcpkg/installed/x64-windows/share/drogon/DrogonConfig.cmake:40 (find_dependency)"
+      - "CMakeLists.txt:41 (find_package)"
+    checks:
+      - "Performing Test CMAKE_HAVE_LIBC_PTHREAD"
+    directories:
+      source: "C:/Users/Contarr/Desktop/ParallelProject/manager/cmake-build-debug-visual-studio/CMakeFiles/CMakeScratch/TryCompile-3tnwwg"
+      binary: "C:/Users/Contarr/Desktop/ParallelProject/manager/cmake-build-debug-visual-studio/CMakeFiles/CMakeScratch/TryCompile-3tnwwg"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: "/DWIN32 /D_WINDOWS /W3 /GR /EHsc"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+      CMAKE_MODULE_PATH: "C:/vcpkg/installed/x64-windows/share/drogon;C:/vcpkg/installed/x64-windows/share/trantor"
+    buildResult:
+      variable: "CMAKE_HAVE_LIBC_PTHREAD"
+      cached: true
+      stdout: |
+        Change Dir: 'C:/Users/Contarr/Desktop/ParallelProject/manager/cmake-build-debug-visual-studio/CMakeFiles/CMakeScratch/TryCompile-3tnwwg'
+        
+        Run Build Command(s): D:/vs/community/MSBuild/Current/Bin/MSBuild.exe cmTC_dae30.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=16.0 /v:n
+        Microsoft (R) Build Engine версии 16.4.0+e901037fe для .NET Framework
+        (C) Корпорация Майкрософт (Microsoft Corporation). Все права защищены.
+        
+        Сборка начата 18.03.2025 23:23:29.
+        Проект "C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-3tnwwg\\cmTC_dae30.vcxproj" в узле 1 (целевые объекты по умолчанию).
+        PrepareForBuild:
+          Создание каталога "cmTC_dae30.dir\\Debug\\".
+          Создание каталога "C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-3tnwwg\\Debug\\".
+          Создание каталога "cmTC_dae30.dir\\Debug\\cmTC_dae30.tlog\\".
+        InitializeBuildStatus:
+          Создание "cmTC_dae30.dir\\Debug\\cmTC_dae30.tlog\\unsuccessfulbuild", так как было задано "AlwaysCreate".
+        ClCompile:
+          D:\\vs\\community\\VC\\Tools\\MSVC\\14.24.28314\\bin\\HostX64\\x64\\CL.exe /c /Zi /W3 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D CMAKE_HAVE_LIBC_PTHREAD /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_dae30.dir\\Debug\\\\" /Fd"cmTC_dae30.dir\\Debug\\vc142.pdb" /Gd /TP /errorReport:queue "C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-3tnwwg\\src.cxx"
+          Оптимизирующий компилятор Microsoft (R) C/C++ версии 19.24.28316 для x64
+          src.cxx
+          (C) Корпорация Майкрософт (Microsoft Corporation).  Все права защищены.
+          cl /c /Zi /W3 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D CMAKE_HAVE_LIBC_PTHREAD /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_dae30.dir\\Debug\\\\" /Fd"cmTC_dae30.dir\\Debug\\vc142.pdb" /Gd /TP /errorReport:queue "C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-3tnwwg\\src.cxx"
+        C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-3tnwwg\\src.cxx(1,10): fatal error C1083: Не удается открыть файл включение: pthread.h: No such file or directory, [C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-3tnwwg\\cmTC_dae30.vcxproj]
+        Сборка проекта "C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-3tnwwg\\cmTC_dae30.vcxproj" завершена (целевые объекты по умолчанию) с ошибкой.
+        
+        Ошибка сборки.
+        
+        "C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-3tnwwg\\cmTC_dae30.vcxproj" (целевой объект по умолчанию) (1) ->
+        (Целевой объект ClCompile) -> 
+          C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-3tnwwg\\src.cxx(1,10): fatal error C1083: Не удается открыть файл включение: pthread.h: No such file or directory, [C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-3tnwwg\\cmTC_dae30.vcxproj]
+        
+            Предупреждений: 0
+            Ошибок: 1
+        
+        Прошло времени 00:00:00.68
+        
+      exitCode: 1
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Program Files/JetBrains/CLion 2024.3.1.1/bin/cmake/win/x64/share/cmake-3.30/Modules/CheckLibraryExists.cmake:69 (try_compile)"
+      - "C:/Program Files/JetBrains/CLion 2024.3.1.1/bin/cmake/win/x64/share/cmake-3.30/Modules/FindThreads.cmake:112 (CHECK_LIBRARY_EXISTS)"
+      - "C:/Program Files/JetBrains/CLion 2024.3.1.1/bin/cmake/win/x64/share/cmake-3.30/Modules/FindThreads.cmake:175 (_threads_check_lib)"
+      - "C:/Program Files/JetBrains/CLion 2024.3.1.1/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeFindDependencyMacro.cmake:76 (find_package)"
+      - "C:/vcpkg/installed/x64-windows/share/trantor/TrantorConfig.cmake:48 (find_dependency)"
+      - "C:/Program Files/JetBrains/CLion 2024.3.1.1/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeFindDependencyMacro.cmake:76 (find_package)"
+      - "C:/vcpkg/installed/x64-windows/share/drogon/DrogonConfig.cmake:40 (find_dependency)"
+      - "CMakeLists.txt:41 (find_package)"
+    checks:
+      - "Looking for pthread_create in pthreads"
+    directories:
+      source: "C:/Users/Contarr/Desktop/ParallelProject/manager/cmake-build-debug-visual-studio/CMakeFiles/CMakeScratch/TryCompile-utm12l"
+      binary: "C:/Users/Contarr/Desktop/ParallelProject/manager/cmake-build-debug-visual-studio/CMakeFiles/CMakeScratch/TryCompile-utm12l"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: "/DWIN32 /D_WINDOWS /W3 /GR /EHsc"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+      CMAKE_MODULE_PATH: "C:/vcpkg/installed/x64-windows/share/drogon;C:/vcpkg/installed/x64-windows/share/trantor"
+    buildResult:
+      variable: "CMAKE_HAVE_PTHREADS_CREATE"
+      cached: true
+      stdout: |
+        Change Dir: 'C:/Users/Contarr/Desktop/ParallelProject/manager/cmake-build-debug-visual-studio/CMakeFiles/CMakeScratch/TryCompile-utm12l'
+        
+        Run Build Command(s): D:/vs/community/MSBuild/Current/Bin/MSBuild.exe cmTC_9e7a4.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=16.0 /v:n
+        Microsoft (R) Build Engine версии 16.4.0+e901037fe для .NET Framework
+        (C) Корпорация Майкрософт (Microsoft Corporation). Все права защищены.
+        
+        Сборка начата 18.03.2025 23:23:30.
+        Проект "C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-utm12l\\cmTC_9e7a4.vcxproj" в узле 1 (целевые объекты по умолчанию).
+        PrepareForBuild:
+          Создание каталога "cmTC_9e7a4.dir\\Debug\\".
+          Создание каталога "C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-utm12l\\Debug\\".
+          Создание каталога "cmTC_9e7a4.dir\\Debug\\cmTC_9e7a4.tlog\\".
+        InitializeBuildStatus:
+          Создание "cmTC_9e7a4.dir\\Debug\\cmTC_9e7a4.tlog\\unsuccessfulbuild", так как было задано "AlwaysCreate".
+        ClCompile:
+          D:\\vs\\community\\VC\\Tools\\MSVC\\14.24.28314\\bin\\HostX64\\x64\\CL.exe /c /Zi /W3 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D CHECK_FUNCTION_EXISTS=pthread_create /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_9e7a4.dir\\Debug\\\\" /Fd"cmTC_9e7a4.dir\\Debug\\vc142.pdb" /Gd /TP /errorReport:queue "C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-utm12l\\CheckFunctionExists.cxx"
+          Оптимизирующий компилятор Microsoft (R) C/C++ версии 19.24.28316 для x64
+          CheckFunctionExists.cxx
+          (C) Корпорация Майкрософт (Microsoft Corporation).  Все права защищены.
+          cl /c /Zi /W3 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D CHECK_FUNCTION_EXISTS=pthread_create /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_9e7a4.dir\\Debug\\\\" /Fd"cmTC_9e7a4.dir\\Debug\\vc142.pdb" /Gd /TP /errorReport:queue "C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-utm12l\\CheckFunctionExists.cxx"
+        Link:
+          D:\\vs\\community\\VC\\Tools\\MSVC\\14.24.28314\\bin\\HostX64\\x64\\link.exe /ERRORREPORT:QUEUE /OUT:"C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-utm12l\\Debug\\cmTC_9e7a4.exe" /INCREMENTAL /NOLOGO pthreads.lib kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG:FASTLINK /PDB:"C:/Users/Contarr/Desktop/ParallelProject/manager/cmake-build-debug-visual-studio/CMakeFiles/CMakeScratch/TryCompile-utm12l/Debug/cmTC_9e7a4.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:/Users/Contarr/Desktop/ParallelProject/manager/cmake-build-debug-visual-studio/CMakeFiles/CMakeScratch/TryCompile-utm12l/Debug/cmTC_9e7a4.lib" /MACHINE:X64  /machine:x64 cmTC_9e7a4.dir\\Debug\\CheckFunctionExists.obj
+        LINK : fatal error LNK1104: эх єфрхЄё  юЄъЁ√Є№ Їрщы "pthreads.lib" [C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-utm12l\\cmTC_9e7a4.vcxproj]
+        Сборка проекта "C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-utm12l\\cmTC_9e7a4.vcxproj" завершена (целевые объекты по умолчанию) с ошибкой.
+        
+        Ошибка сборки.
+        
+        "C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-utm12l\\cmTC_9e7a4.vcxproj" (целевой объект по умолчанию) (1) ->
+        (Целевой объект Link) -> 
+          LINK : fatal error LNK1104: эх єфрхЄё  юЄъЁ√Є№ Їрщы "pthreads.lib" [C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-utm12l\\cmTC_9e7a4.vcxproj]
+        
+            Предупреждений: 0
+            Ошибок: 1
+        
+        Прошло времени 00:00:00.92
+        
+      exitCode: 1
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Program Files/JetBrains/CLion 2024.3.1.1/bin/cmake/win/x64/share/cmake-3.30/Modules/CheckLibraryExists.cmake:69 (try_compile)"
+      - "C:/Program Files/JetBrains/CLion 2024.3.1.1/bin/cmake/win/x64/share/cmake-3.30/Modules/FindThreads.cmake:112 (CHECK_LIBRARY_EXISTS)"
+      - "C:/Program Files/JetBrains/CLion 2024.3.1.1/bin/cmake/win/x64/share/cmake-3.30/Modules/FindThreads.cmake:176 (_threads_check_lib)"
+      - "C:/Program Files/JetBrains/CLion 2024.3.1.1/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeFindDependencyMacro.cmake:76 (find_package)"
+      - "C:/vcpkg/installed/x64-windows/share/trantor/TrantorConfig.cmake:48 (find_dependency)"
+      - "C:/Program Files/JetBrains/CLion 2024.3.1.1/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeFindDependencyMacro.cmake:76 (find_package)"
+      - "C:/vcpkg/installed/x64-windows/share/drogon/DrogonConfig.cmake:40 (find_dependency)"
+      - "CMakeLists.txt:41 (find_package)"
+    checks:
+      - "Looking for pthread_create in pthread"
+    directories:
+      source: "C:/Users/Contarr/Desktop/ParallelProject/manager/cmake-build-debug-visual-studio/CMakeFiles/CMakeScratch/TryCompile-6xjiwr"
+      binary: "C:/Users/Contarr/Desktop/ParallelProject/manager/cmake-build-debug-visual-studio/CMakeFiles/CMakeScratch/TryCompile-6xjiwr"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: "/DWIN32 /D_WINDOWS /W3 /GR /EHsc"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+      CMAKE_MODULE_PATH: "C:/vcpkg/installed/x64-windows/share/drogon;C:/vcpkg/installed/x64-windows/share/trantor"
+    buildResult:
+      variable: "CMAKE_HAVE_PTHREAD_CREATE"
+      cached: true
+      stdout: |
+        Change Dir: 'C:/Users/Contarr/Desktop/ParallelProject/manager/cmake-build-debug-visual-studio/CMakeFiles/CMakeScratch/TryCompile-6xjiwr'
+        
+        Run Build Command(s): D:/vs/community/MSBuild/Current/Bin/MSBuild.exe cmTC_cd3b1.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=16.0 /v:n
+        Microsoft (R) Build Engine версии 16.4.0+e901037fe для .NET Framework
+        (C) Корпорация Майкрософт (Microsoft Corporation). Все права защищены.
+        
+        Сборка начата 18.03.2025 23:23:32.
+        Проект "C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-6xjiwr\\cmTC_cd3b1.vcxproj" в узле 1 (целевые объекты по умолчанию).
+        PrepareForBuild:
+          Создание каталога "cmTC_cd3b1.dir\\Debug\\".
+          Создание каталога "C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-6xjiwr\\Debug\\".
+          Создание каталога "cmTC_cd3b1.dir\\Debug\\cmTC_cd3b1.tlog\\".
+        InitializeBuildStatus:
+          Создание "cmTC_cd3b1.dir\\Debug\\cmTC_cd3b1.tlog\\unsuccessfulbuild", так как было задано "AlwaysCreate".
+        ClCompile:
+          D:\\vs\\community\\VC\\Tools\\MSVC\\14.24.28314\\bin\\HostX64\\x64\\CL.exe /c /Zi /W3 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D CHECK_FUNCTION_EXISTS=pthread_create /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_cd3b1.dir\\Debug\\\\" /Fd"cmTC_cd3b1.dir\\Debug\\vc142.pdb" /Gd /TP /errorReport:queue "C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-6xjiwr\\CheckFunctionExists.cxx"
+          Оптимизирующий компилятор Microsoft (R) C/C++ версии 19.24.28316 для x64
+          CheckFunctionExists.cxx
+          (C) Корпорация Майкрософт (Microsoft Corporation).  Все права защищены.
+          cl /c /Zi /W3 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D CHECK_FUNCTION_EXISTS=pthread_create /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_cd3b1.dir\\Debug\\\\" /Fd"cmTC_cd3b1.dir\\Debug\\vc142.pdb" /Gd /TP /errorReport:queue "C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-6xjiwr\\CheckFunctionExists.cxx"
+        Link:
+          D:\\vs\\community\\VC\\Tools\\MSVC\\14.24.28314\\bin\\HostX64\\x64\\link.exe /ERRORREPORT:QUEUE /OUT:"C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-6xjiwr\\Debug\\cmTC_cd3b1.exe" /INCREMENTAL /NOLOGO pthread.lib kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG:FASTLINK /PDB:"C:/Users/Contarr/Desktop/ParallelProject/manager/cmake-build-debug-visual-studio/CMakeFiles/CMakeScratch/TryCompile-6xjiwr/Debug/cmTC_cd3b1.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:/Users/Contarr/Desktop/ParallelProject/manager/cmake-build-debug-visual-studio/CMakeFiles/CMakeScratch/TryCompile-6xjiwr/Debug/cmTC_cd3b1.lib" /MACHINE:X64  /machine:x64 cmTC_cd3b1.dir\\Debug\\CheckFunctionExists.obj
+        LINK : fatal error LNK1104: эх єфрхЄё  юЄъЁ√Є№ Їрщы "pthread.lib" [C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-6xjiwr\\cmTC_cd3b1.vcxproj]
+        Сборка проекта "C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-6xjiwr\\cmTC_cd3b1.vcxproj" завершена (целевые объекты по умолчанию) с ошибкой.
+        
+        Ошибка сборки.
+        
+        "C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-6xjiwr\\cmTC_cd3b1.vcxproj" (целевой объект по умолчанию) (1) ->
+        (Целевой объект Link) -> 
+          LINK : fatal error LNK1104: эх єфрхЄё  юЄъЁ√Є№ Їрщы "pthread.lib" [C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-6xjiwr\\cmTC_cd3b1.vcxproj]
+        
+            Предупреждений: 0
+            Ошибок: 1
+        
+        Прошло времени 00:00:01.03
+        
+      exitCode: 1
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Program Files/JetBrains/CLion 2024.3.1.1/bin/cmake/win/x64/share/cmake-3.30/Modules/CheckIncludeFileCXX.cmake:89 (try_compile)"
+      - "C:/vcpkg/installed/x64-windows/share/drogon/FindFilesystem.cmake:162 (check_include_file_cxx)"
+      - "C:/Program Files/JetBrains/CLion 2024.3.1.1/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeFindDependencyMacro.cmake:76 (find_package)"
+      - "C:/vcpkg/installed/x64-windows/share/drogon/DrogonConfig.cmake:70 (find_dependency)"
+      - "CMakeLists.txt:41 (find_package)"
+    checks:
+      - "Looking for C++ include filesystem"
+    directories:
+      source: "C:/Users/Contarr/Desktop/ParallelProject/manager/cmake-build-debug-visual-studio/CMakeFiles/CMakeScratch/TryCompile-mtmhi3"
+      binary: "C:/Users/Contarr/Desktop/ParallelProject/manager/cmake-build-debug-visual-studio/CMakeFiles/CMakeScratch/TryCompile-mtmhi3"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: "/DWIN32 /D_WINDOWS /W3 /GR /EHsc"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+      CMAKE_MODULE_PATH: "C:/vcpkg/installed/x64-windows/share/drogon;C:/vcpkg/installed/x64-windows/share/trantor"
+    buildResult:
+      variable: "_CXX_FILESYSTEM_HAVE_HEADER"
+      cached: true
+      stdout: |
+        Change Dir: 'C:/Users/Contarr/Desktop/ParallelProject/manager/cmake-build-debug-visual-studio/CMakeFiles/CMakeScratch/TryCompile-mtmhi3'
+        
+        Run Build Command(s): D:/vs/community/MSBuild/Current/Bin/MSBuild.exe cmTC_27085.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=16.0 /v:n
+        Microsoft (R) Build Engine версии 16.4.0+e901037fe для .NET Framework
+        (C) Корпорация Майкрософт (Microsoft Corporation). Все права защищены.
+        
+        Сборка начата 18.03.2025 23:23:34.
+        Проект "C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-mtmhi3\\cmTC_27085.vcxproj" в узле 1 (целевые объекты по умолчанию).
+        PrepareForBuild:
+          Создание каталога "cmTC_27085.dir\\Debug\\".
+          Создание каталога "C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-mtmhi3\\Debug\\".
+          Создание каталога "cmTC_27085.dir\\Debug\\cmTC_27085.tlog\\".
+        InitializeBuildStatus:
+          Создание "cmTC_27085.dir\\Debug\\cmTC_27085.tlog\\unsuccessfulbuild", так как было задано "AlwaysCreate".
+        ClCompile:
+          D:\\vs\\community\\VC\\Tools\\MSVC\\14.24.28314\\bin\\HostX64\\x64\\CL.exe /c /Zi /W3 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_27085.dir\\Debug\\\\" /Fd"cmTC_27085.dir\\Debug\\vc142.pdb" /Gd /TP /errorReport:queue "C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-mtmhi3\\CheckIncludeFile.cxx"
+          Оптимизирующий компилятор Microsoft (R) C/C++ версии 19.24.28316 для x64
+          (C) Корпорация Майкрософт (Microsoft Corporation).  Все права защищены.
+          CheckIncludeFile.cxx
+          cl /c /Zi /W3 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_27085.dir\\Debug\\\\" /Fd"cmTC_27085.dir\\Debug\\vc142.pdb" /Gd /TP /errorReport:queue "C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-mtmhi3\\CheckIncludeFile.cxx"
+          The contents of <filesystem> are only available with C++17 or later.
+        Link:
+          D:\\vs\\community\\VC\\Tools\\MSVC\\14.24.28314\\bin\\HostX64\\x64\\link.exe /ERRORREPORT:QUEUE /OUT:"C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-mtmhi3\\Debug\\cmTC_27085.exe" /INCREMENTAL /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG:FASTLINK /PDB:"C:/Users/Contarr/Desktop/ParallelProject/manager/cmake-build-debug-visual-studio/CMakeFiles/CMakeScratch/TryCompile-mtmhi3/Debug/cmTC_27085.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:/Users/Contarr/Desktop/ParallelProject/manager/cmake-build-debug-visual-studio/CMakeFiles/CMakeScratch/TryCompile-mtmhi3/Debug/cmTC_27085.lib" /MACHINE:X64  /machine:x64 cmTC_27085.dir\\Debug\\CheckIncludeFile.obj
+          cmTC_27085.vcxproj -> C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-mtmhi3\\Debug\\cmTC_27085.exe
+        FinalizeBuildStatus:
+          Файл "cmTC_27085.dir\\Debug\\cmTC_27085.tlog\\unsuccessfulbuild" удаляется.
+          Обращение к "cmTC_27085.dir\\Debug\\cmTC_27085.tlog\\cmTC_27085.lastbuildstate".
+        Сборка проекта "C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-mtmhi3\\cmTC_27085.vcxproj" завершена (целевые объекты по умолчанию).
+        
+        Сборка успешно завершена.
+            Предупреждений: 0
+            Ошибок: 0
+        
+        Прошло времени 00:00:01.44
+        
+      exitCode: 0
+  -
+    kind: "try_run-v1"
+    backtrace:
+      - "C:/Program Files/JetBrains/CLion 2024.3.1.1/bin/cmake/win/x64/share/cmake-3.30/Modules/Internal/CheckSourceRuns.cmake:93 (try_run)"
+      - "C:/Program Files/JetBrains/CLion 2024.3.1.1/bin/cmake/win/x64/share/cmake-3.30/Modules/CheckCXXSourceRuns.cmake:52 (cmake_check_source_runs)"
+      - "C:/vcpkg/installed/x64-windows/share/drogon/FindFilesystem.cmake:126 (check_cxx_source_runs)"
+      - "C:/vcpkg/installed/x64-windows/share/drogon/FindFilesystem.cmake:220 (_cmcm_check_cxx_source)"
+      - "C:/Program Files/JetBrains/CLion 2024.3.1.1/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeFindDependencyMacro.cmake:76 (find_package)"
+      - "C:/vcpkg/installed/x64-windows/share/drogon/DrogonConfig.cmake:70 (find_dependency)"
+      - "CMakeLists.txt:41 (find_package)"
+    checks:
+      - "Performing Test CXX_FILESYSTEM_NO_LINK_NEEDED"
+    directories:
+      source: "C:/Users/Contarr/Desktop/ParallelProject/manager/cmake-build-debug-visual-studio/CMakeFiles/CMakeScratch/TryCompile-8wfaov"
+      binary: "C:/Users/Contarr/Desktop/ParallelProject/manager/cmake-build-debug-visual-studio/CMakeFiles/CMakeScratch/TryCompile-8wfaov"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: "/DWIN32 /D_WINDOWS /W3 /GR /EHsc"
+      CMAKE_CXX_FLAGS_DEBUG: "/Zi /Od /DDEBUG"
+      CMAKE_EXE_LINKER_FLAGS: "/machine:x64"
+      CMAKE_MODULE_PATH: "C:/vcpkg/installed/x64-windows/share/drogon;C:/vcpkg/installed/x64-windows/share/trantor"
+    buildResult:
+      variable: "CXX_FILESYSTEM_NO_LINK_NEEDED_COMPILED"
+      cached: true
+      stdout: |
+        Change Dir: 'C:/Users/Contarr/Desktop/ParallelProject/manager/cmake-build-debug-visual-studio/CMakeFiles/CMakeScratch/TryCompile-8wfaov'
+        
+        Run Build Command(s): D:/vs/community/MSBuild/Current/Bin/MSBuild.exe cmTC_1c996.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=16.0 /v:n
+        Microsoft (R) Build Engine версии 16.4.0+e901037fe для .NET Framework
+        (C) Корпорация Майкрософт (Microsoft Corporation). Все права защищены.
+        
+        Сборка начата 18.03.2025 23:23:36.
+        Проект "C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-8wfaov\\cmTC_1c996.vcxproj" в узле 1 (целевые объекты по умолчанию).
+        PrepareForBuild:
+          Создание каталога "cmTC_1c996.dir\\Debug\\".
+          Создание каталога "C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-8wfaov\\Debug\\".
+          Создание каталога "cmTC_1c996.dir\\Debug\\cmTC_1c996.tlog\\".
+        InitializeBuildStatus:
+          Создание "cmTC_1c996.dir\\Debug\\cmTC_1c996.tlog\\unsuccessfulbuild", так как было задано "AlwaysCreate".
+        ClCompile:
+          D:\\vs\\community\\VC\\Tools\\MSVC\\14.24.28314\\bin\\HostX64\\x64\\CL.exe /c /Zi /W3 /WX- /diagnostics:column /Od /D _MBCS /D WIN32 /D _WINDOWS /D DEBUG /D CXX_FILESYSTEM_NO_LINK_NEEDED /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /std:c++17 /Fo"cmTC_1c996.dir\\Debug\\\\" /Fd"cmTC_1c996.dir\\Debug\\vc142.pdb" /Gd /TP /errorReport:queue "C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-8wfaov\\src.cxx"
+          Оптимизирующий компилятор Microsoft (R) C/C++ версии 19.24.28316 для x64
+          src.cxx
+          (C) Корпорация Майкрософт (Microsoft Corporation).  Все права защищены.
+          cl /c /Zi /W3 /WX- /diagnostics:column /Od /D _MBCS /D WIN32 /D _WINDOWS /D DEBUG /D CXX_FILESYSTEM_NO_LINK_NEEDED /D "CMAKE_INTDIR=\\"Debug\\"" /EHsc /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /std:c++17 /Fo"cmTC_1c996.dir\\Debug\\\\" /Fd"cmTC_1c996.dir\\Debug\\vc142.pdb" /Gd /TP /errorReport:queue "C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-8wfaov\\src.cxx"
+        Link:
+          D:\\vs\\community\\VC\\Tools\\MSVC\\14.24.28314\\bin\\HostX64\\x64\\link.exe /ERRORREPORT:QUEUE /OUT:"C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-8wfaov\\Debug\\cmTC_1c996.exe" /INCREMENTAL /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:/Users/Contarr/Desktop/ParallelProject/manager/cmake-build-debug-visual-studio/CMakeFiles/CMakeScratch/TryCompile-8wfaov/Debug/cmTC_1c996.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:/Users/Contarr/Desktop/ParallelProject/manager/cmake-build-debug-visual-studio/CMakeFiles/CMakeScratch/TryCompile-8wfaov/Debug/cmTC_1c996.lib" /MACHINE:X64  /machine:x64 cmTC_1c996.dir\\Debug\\src.obj
+          cmTC_1c996.vcxproj -> C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-8wfaov\\Debug\\cmTC_1c996.exe
+        FinalizeBuildStatus:
+          Файл "cmTC_1c996.dir\\Debug\\cmTC_1c996.tlog\\unsuccessfulbuild" удаляется.
+          Обращение к "cmTC_1c996.dir\\Debug\\cmTC_1c996.tlog\\cmTC_1c996.lastbuildstate".
+        Сборка проекта "C:\\Users\\Contarr\\Desktop\\ParallelProject\\manager\\cmake-build-debug-visual-studio\\CMakeFiles\\CMakeScratch\\TryCompile-8wfaov\\cmTC_1c996.vcxproj" завершена (целевые объекты по умолчанию).
+        
+        Сборка успешно завершена.
+            Предупреждений: 0
+            Ошибок: 0
+        
+        Прошло времени 00:00:03.50
+        
+      exitCode: 0
+    runResult:
+      variable: "CXX_FILESYSTEM_NO_LINK_NEEDED_EXITCODE"
+      cached: true
+      stdout: |
+        C:/Users/Contarr/Desktop/ParallelProject/manager/cmake-build-debug-visual-studio
+      stderr: |
+      exitCode: 0
+...

@@ -12,20 +12,20 @@ using namespace std;
 
 struct ManagerToWorkerDTO {
 private:
-    string requestId;
-    int partNumber;
-    int partCount;
+    string request_id;
+    int part_number;
+    int part_count;
     string hash;
-    int maxLength;
+    int max_length;
     vector<string> alphabet;
 public:
     Json::Value toJson() const {
         Json::Value result;
-        result["RequestId"] = requestId;
-        result["PartNumber"] = partNumber;
-        result["PartCount"] = partCount;
+        result["RequestId"] = request_id;
+        result["PartNumber"] = part_number;
+        result["PartCount"] = part_count;
         result["Hash"] = hash;
-        result["MaxLength"] = maxLength;
+        result["MaxLength"] = max_length;
         result["Alphabet"] = Json::Value(Json::arrayValue);
         for (string letter : alphabet) {
             result["Alphabet"].append(letter);
@@ -35,11 +35,13 @@ public:
 
     ManagerToWorkerDTO() = default;
 
-    ManagerToWorkerDTO(const string &requestId,
-                          const int &partNumber,
-                          const int &partCount,
-                          const string &hash,
-                          const int &maxLength,
-                          vector<string> alphabet) :
-    requestId(requestId), partNumber(partNumber), partCount(partCount), hash(hash), maxLength(maxLength), alphabet(alphabet) {}
+    ManagerToWorkerDTO(const string &request_id, const int &part_number,
+                       const int &part_count, const string &hash,
+                       const int &max_length, vector<string> alphabet)
+        : request_id(request_id),
+          part_number(part_number),
+          part_count(part_count),
+          hash(hash),
+          max_length(max_length),
+          alphabet(alphabet) {}
 };
