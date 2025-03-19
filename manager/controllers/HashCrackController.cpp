@@ -3,14 +3,13 @@
 //
 
 #include "HashCrackController.h"
-
-#include <fstream>
-
 #include "ManagerToWorkerDTO.h"
 #include "WorkerToManagerDTO.h"
 
+#include <fstream>
 #include <regex>
 #include <drogon/HttpClient.h>
+#include <cmath>
 
 #include <drogon/HttpController.h>
 
@@ -56,9 +55,8 @@ void HashCrack::getCrackResult(
       const HttpRequestPtr &req,
       std::function<void(const HttpResponsePtr &)> &&callback,
       const std::string &request_id) {
-    LOG_INFO << "Getting crack result status for " << request_id << ".";
-    //std::lock_guard lock(crackResultStoreMtx_); если не изменять storage, то
-    //не нужно. Поиск ассинхронен.
+    LOG_INFO << "Getting crack result for " << request_id << ".";
+    std::unique_lock ulock(crack_result_store_mtx_);
     if (crack_result_store_.find(request_id) == crack_result_store_.end()) {
         LOG_ERROR << "No result was found for " << request_id << ".";
         callback(makeFailedResponse());
@@ -66,9 +64,11 @@ void HashCrack::getCrackResult(
     }
 
     auto crack_result = crack_result_store_[request_id];
-    std::lock_guard lock(crack_result->mtx);
-    LOG_INFO << "Sending crack crack result status for "
+    ulock.unlock();
+    setProgressValue(crack_result, request_id);
+    LOG_INFO << "Sending crack result for "
              << request_id << " to user.";
+    std::lock_guard lock(crack_result->mtx);
     callback(HttpResponse::newHttpJsonResponse(crack_result->result));
 }
 
@@ -143,6 +143,7 @@ bool HashCrack::addToCrackResults(const std::string& uuid) {
         Json::Value json;
         json["status"] = StatusTypes[kInProgress];
         json["data"] = Json::Value(Json::arrayValue);
+        json["progress"] = "0%";
         auto request_ptr = std::make_shared<CrackResult>();
         request_ptr->result = std::move(json);
         crack_result_store_.insert({uuid, std::move(request_ptr)});
@@ -175,13 +176,7 @@ event loop не забивается, т.к. запросы выполняютс
 
 void HashCrack::notifyWorkersOnTask(std::string &&uuid) {
     LOG_INFO << "Checking workers for " << uuid << " request.";
-    std::vector<std::string> endpoints;
-    ifstream inf(std::getenv("WORKERS_LIST"));
-    string str;
-    while (getline(inf, str)) {
-        endpoints.push_back(str);
-    }
-    inf.close();
+    std::vector<std::string> endpoints = readEndpointsFromFile();
 
     std::unique_lock lock(request_store_mtx_);
     auto request = request_store_.at(uuid);
@@ -197,6 +192,7 @@ void HashCrack::notifyWorkersOnTask(std::string &&uuid) {
         req->setMethod(Get);
         req->setPath("/internal/api/worker/hash/crack/task");
 
+        double kEndpointHealthStatusTimeout = 3.0;
         client->sendRequest(req,
             [endpoint, live_endpoints, remaining_requests, uuid, request, this]
             (ReqResult result, const HttpResponsePtr &response) {
@@ -212,7 +208,7 @@ void HashCrack::notifyWorkersOnTask(std::string &&uuid) {
             if (--(*remaining_requests) == 0) {
                 this->sendTaskToWorkers(live_endpoints, uuid, request);
             }
-        }, 3.0);
+        }, kEndpointHealthStatusTimeout);
     }
 }
 
@@ -220,12 +216,12 @@ void HashCrack::notifyWorkersOnTask(std::string &&uuid) {
 // - Вынести инициализацию crackResultStore_.
 // - Для этого надо заранее составить список живых воркеров.
 void HashCrack::sendTaskToWorkers(
-      const std::shared_ptr<std::vector<std::string>> &live_endpoints,
+      std::shared_ptr<std::vector<std::string>> live_endpoints,
       const std::string &uuid,
       const std::shared_ptr<Request> &request) {
 
     LOG_INFO << "All health checks done. Live endpoints: "
-             << live_endpoints->data();
+             << live_endpoints->size();
 
     // Now send tasks to live endpoints
     int part_count = static_cast<int>(live_endpoints->size());
@@ -238,6 +234,9 @@ void HashCrack::sendTaskToWorkers(
         crack_result_store_[uuid]->result["status"] = StatusTypes[kError];
         return;
     }
+    std::unique_lock lock(request->mtx);
+    request->live_endpoints = live_endpoints;
+    lock.unlock();
 
     for (int part_number = 0; part_number < part_count; ++part_number) {
         sendTaskPartToWorker(uuid, part_count, part_number,
@@ -266,15 +265,16 @@ void HashCrack::sendTaskPartToWorker(
     task_req->setMethod(Post);
     task_req->setPath("/internal/api/worker/hash/crack/task");
 
-    LOG_INFO << "Sent task number " << part_number << " out of " << part_count
+    LOG_INFO << "Sent task part " << part_number + 1 << " out of " << part_count
              << " to endpoint " << liveEndpoint << ".";
-    double delay_timeout = std::stod(std::getenv("DELAY_TIMEOUT"));
+    double kDelayTimeout = std::stod(std::getenv("DELAY_TIMEOUT"));
+    // double delay_timeout = 600.0;
     client->sendRequest(task_req,
         [](ReqResult reqResult, const HttpResponsePtr &workerResponse) {},
-        delay_timeout);
+        kDelayTimeout);
 
     //Возможен pollution, если у нас много маленьких тасок.
-    app().getLoop()->runAfter(delay_timeout, [uuid, part_number, this]() {
+    app().getLoop()->runAfter(kDelayTimeout, [uuid, part_number, this]() {
         this->processWorkersRespond(uuid, part_number);
     });
 }
@@ -313,6 +313,125 @@ bool HashCrack::checkIfTimeout(const shared_ptr<CrackResult> &crack_result,
         return true;
     }
     return false;
+}
+
+std::vector<std::string> HashCrack::readEndpointsFromFile() {
+    std::vector<std::string> endpoints;
+    ifstream inf(std::getenv("WORKERS_LIST"));
+    string str;
+    while (getline(inf, str)) {
+        endpoints.push_back(str);
+    }
+    inf.close();
+    return endpoints;
+}
+
+void HashCrack::setProgressValue(
+      const std::shared_ptr<CrackResult> &crack_result,
+      const std::string &request_id) {
+    LOG_INFO << "Setting progress value for " << request_id << ".";
+
+    std::unique_lock ulock(request_store_mtx_);
+    if (request_store_.find(request_id) == request_store_.end()) {
+        ulock.unlock();
+        std::lock_guard lock(crack_result->mtx);
+        crack_result->result["progress"] = "100%";
+        LOG_INFO << "Progress for request " << request_id << " set up.";
+        return;
+    }
+
+    auto request = request_store_[request_id];
+    ulock.unlock();
+    std::unique_lock request_lock(request->mtx);
+    int length = request->request_body["maxLength"].asInt();
+    int part_count = request->live_endpoints->size();
+    request_lock.unlock();
+
+    size_t max_iterations = 0;
+    for (int i = 1; i <= length; ++i) {
+        max_iterations += static_cast<size_t>(pow(Alphabet.size(), i));
+    }
+    size_t sum_iterations = 0;
+
+    for (int part_number = 0; part_number < part_count; ++part_number) {
+        request_lock.lock();
+        std::string live_endpoint = request->live_endpoints->at(part_number);
+        request_lock.unlock();
+        countIterations(crack_result, request_id, live_endpoint, part_number,
+                        part_count, max_iterations, sum_iterations);
+    }
+    std::lock_guard lock(crack_result->mtx);
+    crack_result->result["progress"] =
+        std::to_string(
+            static_cast<int>(
+                static_cast<double>(sum_iterations) /
+                static_cast<double>(max_iterations) *
+                100)
+            )
+        + '%';
+    LOG_INFO << "Progress for request " << request_id << " set up.";
+}
+
+void HashCrack::countIterations(
+      const std::shared_ptr<CrackResult> &crack_result,
+      const std::string &request_id,
+      const std::string &live_endpoint,
+      const int &part_number,
+      const int &part_count,
+      const size_t &max_iterations,
+      size_t &sum_iterations) {
+    std::unique_lock lock(crack_result->mtx);
+    if (crack_result->workers[part_number] != kWaiting) {
+        LOG_INFO << "Worker number " << part_number << " on request "
+                 << request_id << " made all his work.";
+        sum_iterations += max_iterations/part_count;
+        lock.unlock();
+        return;
+    }
+    lock.unlock();
+
+    auto respJson = getIterationsFromWorker(live_endpoint, request_id,
+                                            part_number);
+
+    if (!respJson->isNull() &&
+        respJson->isUInt64()) {
+        LOG_INFO << "Got response from worker " << part_number
+                  << " on request " << request_id << " of task progress.";
+        size_t task_iterations = respJson->asUInt64();
+        sum_iterations += task_iterations;
+        }
+    else {
+        LOG_ERROR << "Worker number " << part_number
+                  << " didn't found progress on request " << request_id << ".";
+    }
+}
+
+std::shared_ptr<Json::Value> HashCrack::getIterationsFromWorker(
+      const std::string &live_endpoint,
+      const std::string &request_id,
+      const int &part_number) {
+    auto client = HttpClient::newHttpClient(live_endpoint);
+    auto request = HttpRequest::newHttpRequest();
+    request->setMethod(Get);
+    request->setPath("/internal/api/worker/hash/crack/percentage");
+    request->setParameter("request_id", request_id);
+
+    LOG_INFO << "Sending request for worker " << part_number << " on request "
+             << request_id << " for task progress.";
+
+    double kIterRequestTimeout = 5.0;
+    auto resp = client->sendRequest(request, kIterRequestTimeout);
+    auto req_result = resp.first;
+    std::shared_ptr<Json::Value> respJson =
+        make_shared<Json::Value>(Json::nullValue);
+    if (req_result == ReqResult::Ok) {
+        respJson = resp.second->jsonObject();
+    }
+    else {
+        LOG_ERROR << "Failed to get response from worker " << part_number
+          << " on request " << request_id << " of task progress.";
+    }
+    return respJson;
 }
 
 HttpResponsePtr HashCrack::makeFailedResponse() {

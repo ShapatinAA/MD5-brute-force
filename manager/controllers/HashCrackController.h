@@ -76,7 +76,9 @@ protected:
     struct Request
     {
         Json::Value request_body;
+        std::shared_ptr<std::vector<std::string>> live_endpoints;
         std::mutex mtx;
+
     };
 
     struct CrackResult
@@ -101,6 +103,8 @@ protected:
         const std::shared_ptr<CrackResult> &crack_result,
         const WorkerToManagerDTO &response);
 
+    std::vector<std::string> readEndpointsFromFile();
+
     static HttpResponsePtr makeFailedResponse();
 
     static HttpResponsePtr makeSuccessResponse(Json::Value &&uuid);
@@ -109,8 +113,12 @@ protected:
 
     void notifyWorkersOnTask(std::string &&uuid);
 
+    void setProgressValue(
+        const std::shared_ptr<CrackResult> &crack_result,
+        const std::string& request_id);
+
     void sendTaskToWorkers(
-        const std::shared_ptr<std::vector<std::string>> &live_endpoints,
+        std::shared_ptr<std::vector<std::string>> live_endpoints,
         const std::string &uuid,
         const std::shared_ptr<Request> &request);
 
@@ -122,11 +130,26 @@ protected:
     void processWorkersRespond(const std::string &uuid,
                                const int &part_number);
 
+    void countIterations(
+        const std::shared_ptr<CrackResult> &crack_result,
+        const std::string &request_id,
+        const std::string &live_endpoint,
+        const int &part_number,
+        const int &part_count,
+        const size_t &max_iterations,
+        size_t &sum_iterations);
+
+    std::shared_ptr<Json::Value> getIterationsFromWorker(
+        const std::string &live_endpoint,
+        const std::string &request_id,
+        const int &part_number);
+
     std::unordered_map<std::string, std::shared_ptr<CrackResult>>
         crack_result_store_;
     std::unordered_map<std::string, std::shared_ptr<Request>>
         request_store_;
     const int max_store_size_ = std::stoi(std::getenv("MAX_QUEUE_SIZE"));
+    // const int max_store_size_ = 10;
     std::mutex request_store_mtx_;
     std::mutex crack_result_store_mtx_;
 };

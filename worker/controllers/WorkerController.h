@@ -20,9 +20,12 @@ public:
     ADD_METHOD_TO(WorkerController::sendStatusAlive,
                   "/internal/api/worker/hash/crack/task",
                   Get);
+    ADD_METHOD_TO(WorkerController::sendPercentage,
+                  "/internal/api/worker/hash/crack/percentage?request_id={uuid}",
+                  Get);
     METHOD_LIST_END
 
-    static void crackInitialize(
+    void crackInitialize(
         const HttpRequestPtr &req,
         std::function<void(const HttpResponsePtr &)> &&callback);
 
@@ -30,13 +33,34 @@ public:
         const HttpRequestPtr &req,
         std::function<void(const HttpResponsePtr &)> &&callback);
 
+    void sendPercentage(
+        const HttpRequestPtr &req,
+        std::function<void(const HttpResponsePtr &)> &&callback,
+        const std::string &request_id);
+
 protected:
 
-    static vector<string> bruteForce(ManagerToWorkerDTO &&task,
-                                     const shared_ptr<atomic_bool> &isTimeout);
+    vector<string> bruteForceAllLength(
+        const ManagerToWorkerDTO &task,
+        const shared_ptr<atomic_bool> &isTimeout);
+
+    void bruteForceFixedLength(
+        const size_t &start,
+        const size_t &end,
+        const shared_ptr<atomic_bool> &is_timeout,
+        const int &length,
+        const int &alphabet_size,
+        const string &hash,
+        const string &uuid,
+        const vector<string> &alphabet,
+        vector<string> &results);
 
     static void sendResultsToManager(const ManagerToWorkerDTO &task,
                                      const vector<string> &results);
+
+    std::unordered_map<std::string, std::shared_ptr<std::atomic_size_t>>
+        tasks_store_;
+    std::mutex tasks_store_mtx_;
 
 };
 
