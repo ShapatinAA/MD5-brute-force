@@ -69,7 +69,8 @@ void HashCrack::getCrackResult(
     LOG_INFO << "Sending crack result for "
              << request_id << " to user.";
     std::lock_guard lock(crack_result->mtx);
-    callback(HttpResponse::newHttpJsonResponse(crack_result->result));
+    Json::Value json(crack_result->result);
+    callback(HttpResponse::newHttpJsonResponse(std::move(json)));
 }
 
 //TODO:
@@ -112,8 +113,12 @@ void HashCrack::processTaskResponde(
     LOG_INFO << "Setting status READY to job with number "
              << response.getRequestId() << ".";
     crack_result->result["status"] = StatusTypes[kReady];
-    std::lock_guard lock_req(request_store_mtx_);
-    request_store_.erase(response.getRequestId());
+    std::lock_guard lock_store(request_store_mtx_);
+    if (request_store_.find(response.getRequestId()) != request_store_.end()) {
+        auto request = request_store_.at(response.getRequestId());
+        std::lock_guard lock_req(request->mtx);
+        request_store_.erase(response.getRequestId());
+    }
     LOG_INFO << "Erased " << response.getRequestId() << " from requests store.";
 }
 
@@ -248,7 +253,7 @@ void HashCrack::sendTaskToWorkers(
 void HashCrack::sendTaskPartToWorker(
       std::string uuid, int part_count, int part_number,
       const std::shared_ptr<Request> &request,
-      const std::shared_ptr<std::vector<std::string>> &live_endpoints) {
+      std::shared_ptr<std::vector<std::string>> &live_endpoints) {
     std::unique_lock lock(crack_result_store_mtx_);
     crack_result_store_[uuid]->workers.insert({part_number, kWaiting});
     lock.unlock();
@@ -269,7 +274,7 @@ void HashCrack::sendTaskPartToWorker(
     LOG_INFO << "Sent task part " << part_number + 1 << " out of " << part_count
              << " to endpoint " << liveEndpoint << ".";
     double kDelayTimeout = std::stod(std::getenv("DELAY_TIMEOUT"));
-    // double delay_timeout = 600.0;
+    // double kDelayTimeout = 600.0;
     client->sendRequest(task_req,
         [](ReqResult reqResult, const HttpResponsePtr &workerResponse) {},
         kDelayTimeout);
@@ -304,7 +309,7 @@ void HashCrack::processWorkersRespond(const std::string &uuid,
     crack_result->result["status"] = StatusTypes[kError];
 }
 
-bool HashCrack::checkIfTimeout(const shared_ptr<CrackResult> &crack_result,
+bool HashCrack::checkIfTimeout(shared_ptr<CrackResult> &crack_result,
                                const WorkerToManagerDTO &response) {
     if (crack_result->workers[response.getPartNumber()] == kTimeout) {
         LOG_INFO
@@ -319,6 +324,8 @@ bool HashCrack::checkIfTimeout(const shared_ptr<CrackResult> &crack_result,
 std::vector<std::string> HashCrack::readEndpointsFromFile() {
     std::vector<std::string> endpoints;
     ifstream inf(std::getenv("WORKERS_LIST"));
+    // ifstream inf("C:\\Users\\Contarr\\Desktop\\" \
+    //              "ParallelProject\\manager\\workers.txt");
     string str;
     while (getline(inf, str)) {
         endpoints.push_back(str);
@@ -328,7 +335,7 @@ std::vector<std::string> HashCrack::readEndpointsFromFile() {
 }
 
 void HashCrack::setProgressValue(
-      const std::shared_ptr<CrackResult> &crack_result,
+      std::shared_ptr<CrackResult> &crack_result,
       const std::string &request_id) {
     LOG_INFO << "Setting progress value for " << request_id << ".";
 
@@ -374,7 +381,7 @@ void HashCrack::setProgressValue(
 }
 
 void HashCrack::countIterations(
-      const std::shared_ptr<CrackResult> &crack_result,
+      std::shared_ptr<CrackResult> &crack_result,
       const std::string &request_id,
       const std::string &live_endpoint,
       const int &part_number,
@@ -423,10 +430,12 @@ std::shared_ptr<Json::Value> HashCrack::getIterationsFromWorker(
     double kIterRequestTimeout = 5.0;
     auto resp = client->sendRequest(request, kIterRequestTimeout);
     auto req_result = resp.first;
+    LOG_INFO << "1";
     std::shared_ptr<Json::Value> respJson =
         make_shared<Json::Value>(Json::nullValue);
     if (req_result == ReqResult::Ok) {
         respJson = resp.second->jsonObject();
+        LOG_INFO << "2";
     }
     else {
         LOG_ERROR << "Failed to get response from worker " << part_number

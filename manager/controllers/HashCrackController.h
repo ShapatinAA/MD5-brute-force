@@ -100,7 +100,7 @@ protected:
         const std::shared_ptr<Json::Value> &req_body_json_ptr);
 
     bool checkIfTimeout(
-        const std::shared_ptr<CrackResult> &crack_result,
+        std::shared_ptr<CrackResult> &crack_result,
         const WorkerToManagerDTO &response);
 
     std::vector<std::string> readEndpointsFromFile();
@@ -114,7 +114,7 @@ protected:
     void notifyWorkersOnTask(std::string &&uuid);
 
     void setProgressValue(
-        const std::shared_ptr<CrackResult> &crack_result,
+        std::shared_ptr<CrackResult> &crack_result,
         const std::string& request_id);
 
     void sendTaskToWorkers(
@@ -125,13 +125,13 @@ protected:
     void sendTaskPartToWorker(
         std::string uuid, int part_count, int part_number,
         const std::shared_ptr<Request> &request,
-        const std::shared_ptr<std::vector<std::string>> &live_endpoints);
+        std::shared_ptr<std::vector<std::string>> &live_endpoints);
 
     void processWorkersRespond(const std::string &uuid,
                                const int &part_number);
 
     void countIterations(
-        const std::shared_ptr<CrackResult> &crack_result,
+        std::shared_ptr<CrackResult> &crack_result,
         const std::string &request_id,
         const std::string &live_endpoint,
         const int &part_number,
@@ -148,8 +148,9 @@ protected:
         crack_result_store_;
     std::unordered_map<std::string, std::shared_ptr<Request>>
         request_store_;
-    const int kMaxRequestStoreSize = std::stoi(std::getenv("MAX_QUEUE_SIZE"));
-    // const int max_store_size_ = 10;
+    const int kMaxRequestStoreSize =
+        std::stoi(std::getenv("MAX_QUEUE_SIZE"));
+    // const int kMaxRequestStoreSize = 10;
     std::mutex request_store_mtx_;
     std::mutex crack_result_store_mtx_;
 };

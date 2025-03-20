@@ -20,9 +20,10 @@ public:
     ADD_METHOD_TO(WorkerController::sendStatusAlive,
                   "/internal/api/worker/hash/crack/task",
                   Get);
-    ADD_METHOD_TO(WorkerController::sendPercentage,
-                  "/internal/api/worker/hash/crack/percentage?request_id={uuid}",
-                  Get);
+    ADD_METHOD_TO(
+        WorkerController::sendPercentage,
+        "/internal/api/worker/hash/crack/percentage?request_id={uuid}",
+        Get);
     METHOD_LIST_END
 
     void crackInitialize(
