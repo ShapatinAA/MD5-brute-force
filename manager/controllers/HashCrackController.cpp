@@ -16,13 +16,6 @@
 
 using namespace drogon;
 
-/*
- * TODO:
- *  - Добавить ограничение на кол-во добавляемых в коллекцию элементов,
- *  - тем самым реализовав ограниченную очередь;
- *  - для этого уже есть переменная maxStoreSize_,
- *  - остаётся внедрить проверку по ней в функцию.
-*/
 void HashCrack::crackInitialize(
       const HttpRequestPtr &req,
       std::function<void(const HttpResponsePtr &)> &&callback) {
@@ -175,9 +168,9 @@ Json::Value HashCrack::addToStorageRequests(
 отправляя get запросы, чтобы убедиться, что они работают.
 После того, как мы получим список работающих воркеров,
 мы разобьём задачу на n частей для всех живых работяг.
-и отправим им их задачи POST'ом с таймером на ответ.
+И отправим им их задачи POST'ом.
 event loop не забивается, т.к. запросы выполняются асинхронно и
-только последний выполненный запрос начинает настоящую работу
+только последний выполненный запрос начинает настоящую работу.
 */
 
 void HashCrack::notifyWorkersOnTask(std::string &&uuid) {
@@ -430,12 +423,10 @@ std::shared_ptr<Json::Value> HashCrack::getIterationsFromWorker(
     double kIterRequestTimeout = 5.0;
     auto resp = client->sendRequest(request, kIterRequestTimeout);
     auto req_result = resp.first;
-    LOG_INFO << "1";
     std::shared_ptr<Json::Value> respJson =
         make_shared<Json::Value>(Json::nullValue);
     if (req_result == ReqResult::Ok) {
         respJson = resp.second->jsonObject();
-        LOG_INFO << "2";
     }
     else {
         LOG_ERROR << "Failed to get response from worker " << part_number
