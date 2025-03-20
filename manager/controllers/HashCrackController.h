@@ -148,7 +148,7 @@ protected:
         crack_result_store_;
     std::unordered_map<std::string, std::shared_ptr<Request>>
         request_store_;
-    const int max_store_size_ = std::stoi(std::getenv("MAX_QUEUE_SIZE"));
+    const int kMaxRequestStoreSize = std::stoi(std::getenv("MAX_QUEUE_SIZE"));
     // const int max_store_size_ = 10;
     std::mutex request_store_mtx_;
     std::mutex crack_result_store_mtx_;

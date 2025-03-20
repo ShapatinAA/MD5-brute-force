@@ -40,7 +40,7 @@ void HashCrack::crackInitialize(
 
     std::string uuid = getRandomString(64);
     if (!addToCrackResults(uuid)) {
-        LOG_ERROR << "Uuid already exists.";
+        LOG_ERROR << "Can not add uuid.";
         callback(makeFailedResponse());
         return;
     }
@@ -139,7 +139,8 @@ bool HashCrack::requestValidated(
 
 bool HashCrack::addToCrackResults(const std::string& uuid) {
     std::lock_guard lock(crack_result_store_mtx_);
-    if (crack_result_store_.find(uuid) == crack_result_store_.end()) {
+    if (crack_result_store_.find(uuid) == crack_result_store_.end() &&
+        crack_result_store_.size() < kMaxRequestStoreSize) {
         Json::Value json;
         json["status"] = StatusTypes[kInProgress];
         json["data"] = Json::Value(Json::arrayValue);
