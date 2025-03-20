@@ -27,7 +27,7 @@ Response body:
     "requestId":"fc0atk78bcn6ktgl64cv1oank9ffvub13jr45s96k0683d9m3jl2dtraevsjb7le"
 }
 ```
-After sending upper request and getting "requestId" value, you'll be able to know your request status via sending next http request:
+After sending upper request and getting "requestId" value, you'll be able to know your request status via sending next http request, where {requestId} value should be putted in from previous request:
 ```
 GET http://127.0.0.1:8848/api/hash/status?requestId={requestId}
 ```
