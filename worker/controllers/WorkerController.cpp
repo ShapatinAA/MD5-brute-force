@@ -103,7 +103,6 @@ void WorkerController::sendResultsToManager(
     }, 5.0);
 }
 
-//TODO: Добавить увеличение счётчика итераций в tasks_store_ с механизмом защиты
 void WorkerController::bruteForceFixedLength(
       const size_t &start,
       const size_t &end,
@@ -146,8 +145,8 @@ void WorkerController::bruteForceFixedLength(
  * Логика следующая - посылаем кол-во обработанных слов.
  * Manager в свою очередь сам высчитает сколько это добавляет процентов.
  * Прим.:
- * По истечении таймера в 60 секунд соответствующая таска из tasks_store_
- * будет удалена.
+ * По истечении таймера в delay_timeout секунд соответствующая таска 
+ * из tasks_store_ будет удалена.
 */
 void WorkerController::sendPercentage(
       const HttpRequestPtr &req,
