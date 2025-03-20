@@ -1,10 +1,14 @@
 # MD5-brute-force
 This is hash cracker for MD5 type of hash. It uses bruteforce.
 
+## Building
+
 To start service just type.
 ```
 cd ./docker && docker compose up
 ```
+
+## First steps
 
 After that you'll be able to access next endpoints with http requests.
 ```
@@ -23,22 +27,24 @@ Response body:
     "requestId":"fc0atk78bcn6ktgl64cv1oank9ffvub13jr45s96k0683d9m3jl2dtraevsjb7le"
 }
 ```
-После отправки запроса выше и получения значения, можно узнать статус готовности задачи
+After sending upper request and getting "requestId" value, you'll be able to know your request status via sending next http request:
 ```
 GET http://127.0.0.1:8848/api/hash/status?requestId={requestId}
 ```
 ```
 Response body:
 {
-    "status":"IN_PROGRESS",
-    "data": null
+    "data": []
+    "progress": 0%
+    "status": "IN_PROGRESS",
 }
 ```
-Ответ,  если ответ готов.
+You'll see final data, when service will have "progress" value as 100%.
 ```
 Response body:
 {
-   "status":"READY",
-   "data": ["abcd"]
+    "data": [aa]
+    "progress": 78%
+    "status": "IN_PROGRESS",
 }
 ```
