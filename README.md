@@ -45,6 +45,6 @@ Response body:
 {
     "data": [aa]
     "progress": 78%
-    "status": "IN_PROGRESS",
+    "status": "PARTIAL_RESULT",
 }
 ```
