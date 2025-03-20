@@ -1,7 +1,10 @@
 # MD5-brute-force
 This is hash cracker for MD5 type of hash. It uses bruteforce.
 
-To start service use docker compose up.
+To start service just type.
+```
+cd ./docker && docker compose up
+```
 
 After that you'll be able to access next endpoints with http requests.
 ```
