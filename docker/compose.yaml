@@ -4,18 +4,27 @@ networks:
 
 services:
   worker1:
+    build:
+      context: ../worker
+      dockerfile: ./Dockerfile
     image: worker1
     env_file: "./work.env"
     networks:
       - my-bridge
 
   worker2:
+    build:
+      context: ../worker
+      dockerfile: ./Dockerfile
     image: worker1
     env_file: "./work.env"
     networks:
       - my-bridge
 
   worker3:
+    build:
+      context: ../worker
+      dockerfile: ./Dockerfile
     image: worker1
     env_file: "./work.env"
     networks:
@@ -23,6 +32,9 @@ services:
 
 
   manager:
+    build:
+      context: ../manager
+      dockerfile: ./Dockerfile
     image: manager
     env_file: 
      - "./manag.env"
