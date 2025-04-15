@@ -6,6 +6,13 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+set(MONGO_LIBRARIES
+        /usr/local/lib/libmongocxx.so._noabi
+        /usr/local/lib/libbsoncxx.so._noabi
+        /usr/local/lib/libmongoc-1.0.so.0
+        /usr/local/lib/libbson-1.0.so.0
+)
+
 # Source files
 add_executable(${PROJECT_NAME}
         main.cc
@@ -15,30 +22,18 @@ add_executable(${PROJECT_NAME}
         models/WorkerToManagerDTO.h
 )
 
-# Manually add MongoDB include paths (from /usr/local)
-target_include_directories(${PROJECT_NAME} PRIVATE
-        /usr/local/include/mongocxx
-        /usr/local/include/bsoncxx
+target_link_directories(${PROJECT_NAME} PRIVATE
+        /usr/local/lib
 )
 
-# Link libraries manually
-target_link_directories(${PROJECT_NAME} PRIVATE /usr/local/lib)
-
-find_package(libmongocxx REQUIRED)
-find_package(libbsoncxx REQUIRED)
-
-add_library(libmongocxx INTERFACE IMPORTED)
-add_library(libbsoncxx INTERFACE IMPORTED)
-
-set_property(TARGET libmongocxx PROPERTY
-        INTERFACE_INCLUDE_DIRECTORIES ${LIBMONGOCXX_INCLUDE_DIRS})
-set_property(TARGET libbsoncxx PROPERTY
-        INTERFACE_INCLUDE_DIRECTORIES ${LIBBSONCXX_INCLUDE_DIRS})
-
-include_directories(${LIBMONGOCXX_INCLUDE_DIRS} ${LIBBSONCXX_INCLUDE_DIRS})
-
-link_directories(${LIBMONGOCXX_INCLUDE_DIRS})
-link_directories(${LIBBSONCXX_INCLUDE_DIR})
+# 5. Modified link order with C driver dependencies
+target_link_libraries(${PROJECT_NAME} PRIVATE
+        ${MONGO_LIBRARIES}
+)
+# 5. Add library directories
+target_link_directories(${PROJECT_NAME} PRIVATE
+        /usr/local/lib
+)
 
 # Drogon
 find_package(Drogon CONFIG REQUIRED)

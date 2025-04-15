@@ -1,4 +1,4 @@
-#define NOMINMAX
+ #define NOMINMAX
 
 #include <drogon/drogon.h>
 
@@ -6,20 +6,20 @@
 #include <iostream>
 #include <vector>
 
-#include <bsoncxx/builder/basic/document.hpp>
-#include <bsoncxx/json.hpp>
-#include <mongocxx/client.hpp>
-#include <mongocxx/instance.hpp>
-#include <mongocxx/uri.hpp>
+ #include <bsoncxx/builder/basic/document.hpp>
+ #include <bsoncxx/json.hpp>
+ #include <mongocxx/client.hpp>
+ #include <mongocxx/instance.hpp>
+ #include <mongocxx/uri.hpp>
 
 using namespace drogon;
-using bsoncxx::builder::basic::kvp;
-using bsoncxx::builder::basic::make_document;
+ using bsoncxx::builder::basic::kvp;
+ using bsoncxx::builder::basic::make_document;
 
 int main()
 {
 
-    setlocale(LC_ALL, "en_US.UTF-8");
+     setlocale(LC_ALL, "en_US.UTF-8");
 
     try {
 

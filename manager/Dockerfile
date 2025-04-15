@@ -58,6 +58,18 @@ RUN cp -r /usr/local/include/bsoncxx/v_noabi/bsoncxx/* /usr/local/include/bsoncx
 
 RUN ls /usr/local/lib/
 
+RUN sudo chmod +x /usr/local/lib/libmongoc*.so.* && \
+    sudo chmod +x /usr/local/lib/libbson*.so.*
+
+# 1. Create ldconfig entry
+RUN sudo bash -c 'echo "/usr/local/lib" > /etc/ld.so.conf.d/mongo.conf'
+
+# 2. Update linker cache
+RUN sudo ldconfig
+
+# 3. Verify library detection
+RUN ldconfig -p | grep -E 'mongoc|bson'
+
 WORKDIR /app
 
 RUN drogon_ctl create project ParallelSystems
@@ -70,7 +82,7 @@ COPY . /app/ParallelSystems
 
 RUN cp -f ../CMakeLists.txt ./
 
-RUN cmake -Bbuild -S. && cmake --build build
+RUN cmake -Bbuild -S. -DCMAKE_PREFIX_PATH="/usr/local" -DCMAKE_VERBOSE_MAKEFILE=ON && cmake --build build --verbose
 
 RUN ls ./build/
 
