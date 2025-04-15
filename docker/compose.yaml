@@ -42,3 +42,80 @@ services:
       - "${MANAGER_PORTS}"
     networks:
       - my-bridge
+
+  rabbitmq:
+    image: rabbitmq:management
+    env_file:
+      - "./rabbitmq.env"
+    volumes:
+      - rabbitmq:/tmp/rabbitmq
+    ports:
+      - 15672:15672
+    networks:
+      - my-bridge
+
+  mongodb1:
+    image: mongo
+    networks:
+      - my-bridge
+    volumes:
+      - ./data1:/data/db
+      - ./mongodb_config:/data/configdb
+    ports:
+      - 27017:27017
+    entrypoint: [ "/usr/bin/mongod", "--config", "/data/configdb/mongod.conf"]
+
+  mongodb2:
+    image: mongo
+    networks:
+      - my-bridge
+    volumes:
+      - ./data2:/data/db
+      - ./mongodb_config:/data/configdb
+    ports:
+      - 27018:27017
+    entrypoint: [ "/usr/bin/mongod", "--config", "/data/configdb/mongod.conf"]
+
+  mongodb3:
+    image: mongo
+    networks:
+      - my-bridge
+    volumes:
+      - ./data3:/data/db
+      - ./mongodb_config:/data/configdb
+    ports:
+      - 27019:27017
+    entrypoint: [ "/usr/bin/mongod", "--config", "/data/configdb/mongod.conf"]
+
+  mongoclient:
+    image: mongo
+    networks:
+      - my-bridge
+    depends_on:
+      - mongodb1
+      - mongodb2
+      - mongodb3
+    volumes:
+      - ./deployment_scripts:/deployment_scripts
+    entrypoint:
+      - /deployment_scripts/initiate_replica.sh
+
+  mongo-express:
+    image: mongo-express
+    ports:
+      - "8089:8081"
+    environment:
+    - ME_CONFIG_MONGODB_URL=mongodb://mongodb1:27017,mongodb2:27017,mongodb3:27017/?replicaSet=rs0
+    depends_on:
+      - mongodb1
+      - mongodb2
+      - mongodb3
+    networks:
+      - my-bridge
+
+volumes:
+  data1:
+  data2:
+  data3:
+  config1:
+  rabbitmq:

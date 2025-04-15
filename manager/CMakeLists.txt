@@ -1,85 +1,69 @@
-cmake_minimum_required(VERSION 3.5)
-project(ParallelSystems CXX)
+cmake_minimum_required(VERSION 3.15)
+project(ParallelSystems LANGUAGES CXX)
 
-include(CheckIncludeFileCXX)
-
-check_include_file_cxx(any HAS_ANY)
-check_include_file_cxx(string_view HAS_STRING_VIEW)
-check_include_file_cxx(coroutine HAS_COROUTINE)
-if (NOT "${CMAKE_CXX_STANDARD}" STREQUAL "")
-    # Do nothing
-elseif (HAS_ANY AND HAS_STRING_VIEW AND HAS_COROUTINE)
-    set(CMAKE_CXX_STANDARD 20)
-elseif (HAS_ANY AND HAS_STRING_VIEW)
-    set(CMAKE_CXX_STANDARD 17)
-else ()
-    set(CMAKE_CXX_STANDARD 14)
-endif ()
-
+# Use C++17 or higher
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "" FORCE)
-set(CMAKE_CXX_FLAGS_DEBUG "/Zi /Od /DDEBUG")
-
-
-add_executable(${PROJECT_NAME} main.cc
+# Source files
+add_executable(${PROJECT_NAME}
+        main.cc
         controllers/HashCrackController.cpp
         controllers/HashCrackController.h
         models/ManagerToWorkerDTO.h
-        models/WorkerToManagerDTO.h)
+        models/WorkerToManagerDTO.h
+)
 
-# ##############################################################################
-# If you include the drogon source code locally in your project, use this method
-# to add drogon 
-# add_subdirectory(drogon) 
-# target_link_libraries(${PROJECT_NAME} PRIVATE drogon)
-#
-# and comment out the following lines
-#set(CMAKE_TOOLCHAIN_FILE "C:/vcpkg/scripts/buildsystems/vcpkg.cmake")
-#set(CMAKE_PREFIX_PATH "C:/vcpkg/installed/x64-windows/share/drogon" ${CMAKE_PREFIX_PATH})
+# Manually add MongoDB include paths (from /usr/local)
+target_include_directories(${PROJECT_NAME} PRIVATE
+        /usr/local/include/mongocxx
+        /usr/local/include/bsoncxx
+)
+
+# Link libraries manually
+target_link_directories(${PROJECT_NAME} PRIVATE /usr/local/lib)
+
+find_package(libmongocxx REQUIRED)
+find_package(libbsoncxx REQUIRED)
+
+add_library(libmongocxx INTERFACE IMPORTED)
+add_library(libbsoncxx INTERFACE IMPORTED)
+
+set_property(TARGET libmongocxx PROPERTY
+        INTERFACE_INCLUDE_DIRECTORIES ${LIBMONGOCXX_INCLUDE_DIRS})
+set_property(TARGET libbsoncxx PROPERTY
+        INTERFACE_INCLUDE_DIRECTORIES ${LIBBSONCXX_INCLUDE_DIRS})
+
+include_directories(${LIBMONGOCXX_INCLUDE_DIRS} ${LIBBSONCXX_INCLUDE_DIRS})
+
+link_directories(${LIBMONGOCXX_INCLUDE_DIRS})
+link_directories(${LIBBSONCXX_INCLUDE_DIR})
+
+# Drogon
 find_package(Drogon CONFIG REQUIRED)
-target_link_libraries(${PROJECT_NAME} debug Drogon::Drogon)
+target_link_libraries(${PROJECT_NAME} PRIVATE Drogon::Drogon)
 
-# ##############################################################################
-
-if (CMAKE_CXX_STANDARD LESS 17)
-    message(FATAL_ERROR "c++17 or higher is required")
-elseif (CMAKE_CXX_STANDARD LESS 20)
-    message(STATUS "use c++17")
-else ()
-    message(STATUS "use c++20")
-endif ()
-
+# Add extra sources
 aux_source_directory(controllers CTL_SRC)
 aux_source_directory(filters FILTER_SRC)
 aux_source_directory(plugins PLUGIN_SRC)
 aux_source_directory(models MODEL_SRC)
 
-drogon_create_views(${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/views
-                    ${CMAKE_CURRENT_BINARY_DIR})
-# use the following line to create views with namespaces.
-# drogon_create_views(${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/views
-#                     ${CMAKE_CURRENT_BINARY_DIR} TRUE)
-# use the following line to create views with namespace CHANGE_ME prefixed
-# and path namespaces.
-# drogon_create_views(${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/views
-#                     ${CMAKE_CURRENT_BINARY_DIR} TRUE CHANGE_ME)
+target_sources(${PROJECT_NAME} PRIVATE
+        ${CTL_SRC}
+        ${FILTER_SRC}
+        ${PLUGIN_SRC}
+        ${MODEL_SRC}
+)
 
-target_include_directories(${PROJECT_NAME}
-                           PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
-                                   ${CMAKE_CURRENT_SOURCE_DIR}/models)
-target_sources(${PROJECT_NAME}
-               PRIVATE
-               ${SRC_DIR}
-               ${CTL_SRC}
-               ${FILTER_SRC}
-               ${PLUGIN_SRC}
-               ${MODEL_SRC})
-# ##############################################################################
-# uncomment the following line for dynamically loading views 
-# set_property(TARGET ${PROJECT_NAME} PROPERTY ENABLE_EXPORTS ON)
+target_include_directories(${PROJECT_NAME} PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/models
+)
 
-# ##############################################################################
+# Views
+drogon_create_views(${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/views ${CMAKE_CURRENT_BINARY_DIR})
 
-add_subdirectory(test)
+# (Optional) Debug message
+message(STATUS "C++ Standard: ${CMAKE_CXX_STANDARD}")
