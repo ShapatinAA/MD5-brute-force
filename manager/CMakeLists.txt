@@ -6,12 +6,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-set(MONGO_LIBRARIES
-        /usr/local/lib/libmongocxx.so._noabi
-        /usr/local/lib/libbsoncxx.so._noabi
-        /usr/local/lib/libmongoc-1.0.so.0
-        /usr/local/lib/libbson-1.0.so.0
-)
+set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "" FORCE)
+set(CMAKE_CXX_FLAGS_DEBUG "/Zi /Od /DDEBUG")
 
 # Source files
 add_executable(${PROJECT_NAME}
@@ -22,22 +18,10 @@ add_executable(${PROJECT_NAME}
         models/WorkerToManagerDTO.h
 )
 
-target_link_directories(${PROJECT_NAME} PRIVATE
-        /usr/local/lib
-)
-
-# 5. Modified link order with C driver dependencies
-target_link_libraries(${PROJECT_NAME} PRIVATE
-        ${MONGO_LIBRARIES}
-)
-# 5. Add library directories
-target_link_directories(${PROJECT_NAME} PRIVATE
-        /usr/local/lib
-)
-
 # Drogon
 find_package(Drogon CONFIG REQUIRED)
-target_link_libraries(${PROJECT_NAME} PRIVATE Drogon::Drogon)
+find_package(SimpleAmqpClient CONFIG REQUIRED)
+target_link_libraries(${PROJECT_NAME} PRIVATE SimpleAmqpClient Drogon::Drogon)
 
 # Add extra sources
 aux_source_directory(controllers CTL_SRC)

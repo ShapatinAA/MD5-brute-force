@@ -34,41 +34,15 @@ RUN apt-get update && \
     build-essential  \
     libboost-system-dev  \
     zlib1g-dev  \
-    git
+    git \
+    librabbitmq-dev  \
+    libboost-dev
 
-
-# Install MongoDB C++ driver (mongocxx and bsoncxx)
-WORKDIR /tmp
-RUN curl -OL https://github.com/mongodb/mongo-cxx-driver/releases/download/r4.0.0/mongo-cxx-driver-r4.0.0.tar.gz && \
-    tar -xzf mongo-cxx-driver-r4.0.0.tar.gz &&  \
-    cd mongo-cxx-driver-r4.0.0/build &&         \
-    cmake ..                                    \
-        -DCMAKE_BUILD_TYPE=Release              \
-        -DMONGOCXX_OVERRIDE_DEFAULT_INSTALL_PREFIX=OF && \
-    cmake --build . &&                          \
-    sudo cmake --build . --target install
+RUN git clone https://github.com/alanxz/SimpleAmqpClient.git && \
+    cd SimpleAmqpClient && mkdir simpleamqpclient-build &&  \
+    cd simpleamqpclient-build && cmake .. && sudo make install
 
 RUN ln -s /usr/include/jsoncpp/json/ /usr/include/json
-
-RUN cp -r /usr/local/include/mongocxx/v_noabi/mongocxx/* /usr/local/include/mongocxx/ && \
-    rm -rf /usr/local/include/mongocxx/v_noabi
-
-RUN cp -r /usr/local/include/bsoncxx/v_noabi/bsoncxx/* /usr/local/include/bsoncxx/ && \
-    rm -rf /usr/local/include/bsoncxx/v_noabi
-
-RUN ls /usr/local/lib/
-
-RUN sudo chmod +x /usr/local/lib/libmongoc*.so.* && \
-    sudo chmod +x /usr/local/lib/libbson*.so.*
-
-# 1. Create ldconfig entry
-RUN sudo bash -c 'echo "/usr/local/lib" > /etc/ld.so.conf.d/mongo.conf'
-
-# 2. Update linker cache
-RUN sudo ldconfig
-
-# 3. Verify library detection
-RUN ldconfig -p | grep -E 'mongoc|bson'
 
 WORKDIR /app
 
@@ -82,7 +56,7 @@ COPY . /app/ParallelSystems
 
 RUN cp -f ../CMakeLists.txt ./
 
-RUN cmake -Bbuild -S. -DCMAKE_PREFIX_PATH="/usr/local" -DCMAKE_VERBOSE_MAKEFILE=ON && cmake --build build --verbose
+RUN cd build && cmake .. -DCMAKE_BUILD_TYPE=Debug && make -j4 -verbose
 
 RUN ls ./build/
 
