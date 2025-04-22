@@ -22,6 +22,7 @@ RUN apt-get update && \
     webkit2gtk-4.0 \
     libboost-all-dev \
     gnupg \
+    gdb \
     pkg-config \
     libssl-dev \
     libsasl2-dev \
@@ -38,28 +39,43 @@ RUN apt-get update && \
     librabbitmq-dev  \
     libboost-dev
 
-RUN git clone https://github.com/alanxz/SimpleAmqpClient.git && \
-    cd SimpleAmqpClient && mkdir simpleamqpclient-build &&  \
-    cd simpleamqpclient-build && cmake .. && sudo make install
+#RUN git clone https://github.com/alanxz/SimpleAmqpClient.git && \
+#    cd SimpleAmqpClient && mkdir simpleamqpclient-build &&  \
+#    cd simpleamqpclient-build && cmake -DCMAKE_BUILD_TYPE=Debug .. && sudo make install
+
+RUN git clone https://github.com/CopernicaMarketingSoftware/AMQP-CPP.git && \
+    cd AMQP-CPP && mkdir build && cd build && \
+    cmake .. -DAMQP-CPP_BUILD_SHARED=ON -DAMQP-CPP_LINUX_TCP=ON && \
+    sudo cmake --build . --target install
+
+RUN ls /usr/local/include
+
+RUN ls /usr/local/lib
 
 RUN ln -s /usr/include/jsoncpp/json/ /usr/include/json
 
-WORKDIR /app
+# Update linker cache and set library path
+RUN sudo echo "/usr/local/lib" > /etc/ld.so.conf.d/local.conf && \
+    sudo ldconfig && \
+    sudo echo "LD_LIBRARY_PATH=/usr/local/lib" >> /etc/environment
 
-RUN drogon_ctl create project ParallelSystems
+ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 
 WORKDIR /app/ParallelSystems
+#
+#RUN drogon_ctl create project ParallelSystems
+#
+#WORKDIR /app/ParallelSystems
+#
+#COPY . /app/ParallelSystems
+#
+#RUN cd build && cmake /app/ParallelSystems -DCMAKE_VERBOSE_MAKEFILE=ON && make
+#
+#RUN ls /usr/local/lib
+#
+#CMD ["/app/ParallelSystems/build/ParallelSystems"]
 
-RUN cp CMakeLists.txt ..
+EXPOSE 8848:8848
 
-COPY . /app/ParallelSystems
+EXPOSE 1234:1234
 
-RUN cp -f ../CMakeLists.txt ./
-
-RUN cd build && cmake .. -DCMAKE_BUILD_TYPE=Debug && make -j4 -verbose
-
-RUN ls ./build/
-
-CMD ["./build/ParallelSystems"]
-
-EXPOSE 8848

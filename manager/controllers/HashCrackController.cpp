@@ -273,8 +273,8 @@ void HashCrack::sendTaskPartToWorker(
 
     LOG_INFO << "Sent task part " << part_number + 1 << " out of " << part_count
              << " to endpoint " << liveEndpoint << ".";
-    double kDelayTimeout = std::stod(std::getenv("DELAY_TIMEOUT"));
-    // double kDelayTimeout = 600.0;
+    // double kDelayTimeout = std::stod(std::getenv("DELAY_TIMEOUT"));
+    double kDelayTimeout = 600.0;
     client->sendRequest(task_req,
         [](ReqResult reqResult, const HttpResponsePtr &workerResponse) {},
         kDelayTimeout);
@@ -323,9 +323,9 @@ bool HashCrack::checkIfTimeout(shared_ptr<CrackResult> &crack_result,
 
 std::vector<std::string> HashCrack::readEndpointsFromFile() {
     std::vector<std::string> endpoints;
-    ifstream inf(std::getenv("WORKERS_LIST"));
-    // ifstream inf("C:\\Users\\Contarr\\Desktop\\" \
-    //              "ParallelProject\\manager\\workers.txt");
+    //ifstream inf(std::getenv("WORKERS_LIST"));
+    ifstream inf("C:\\Users\\Contarr\\Desktop\\" \
+                 "ParallelProject\\manager\\workers.txt");
     string str;
     while (getline(inf, str)) {
         endpoints.push_back(str);
