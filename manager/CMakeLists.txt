@@ -33,10 +33,12 @@ add_executable(${PROJECT_NAME}
 
 # 3. Find SimpleAmqpClient using multiple methods
 find_package(amqpcpp CONFIG REQUIRED)
+find_package(bsoncxx CONFIG REQUIRED)
+find_package(mongocxx CONFIG REQUIRED)
 
 # Drogon
 find_package(Drogon CONFIG REQUIRED)
-target_link_libraries(${PROJECT_NAME} debug amqpcpp Drogon::Drogon)
+target_link_libraries(${PROJECT_NAME} debug amqpcpp bsoncxx mongocxx Drogon::Drogon)
 
 if (CMAKE_CXX_STANDARD LESS 17)
     message(FATAL_ERROR "c++17 or higher is required")
