@@ -5,16 +5,29 @@
 #include "HashCrackController.h"
 #include "ManagerToWorkerDTO.h"
 #include "WorkerToManagerDTO.h"
+#include "../plugins/MongoPlugin.h"
 
 #include <fstream>
 #include <regex>
-#include <drogon/HttpClient.h>
 #include <cmath>
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/deadline_timer.hpp>
 
-#include <drogon/HttpController.h>
+#include <bsoncxx/builder/list.hpp>
+#include <bsoncxx/json.hpp>
+#include <amqpcpp.h>
+#include <amqpcpp/libboostasio.h>
+#include <amqpcpp/linux_tcp/tcpchannel.h>
+
+
+#include <amqpcpp.h>
+#include <amqpcpp/libboostasio.h>
 
 
 using namespace drogon;
+
+using bsoncxx::builder::basic::make_document;
+using bsoncxx::builder::basic::kvp;
 
 /*
  * TODO:
@@ -39,16 +52,28 @@ void HashCrack::crackInitialize(
     }
 
     std::string uuid = getRandomString(64);
-    if (!addToCrackResults(uuid)) {
+    bool status_save_task = saveTaskInDb(uuid, req_body_json_ptr);
+    if (!status_save_task) {
         LOG_ERROR << "Can not add uuid.";
         callback(makeFailedResponse());
         return;
     }
-    Json::Value json = addToStorageRequests(uuid, req_body_json_ptr);
-    LOG_INFO << "Request with uuid" << uuid << " added to storage.";
+    LOG_INFO << "Task " << uuid << " saved to MongoDB.";
     LOG_INFO << "Sending uuid" << uuid << " to user.";
-    callback(HttpResponse::newHttpJsonResponse(std::move(json)));
-    notifyWorkersOnTask(std::move(uuid));
+    callback(HttpResponse::newHttpJsonResponse(Json::Value(uuid)));
+    // app().getIOLoop(app().getCurrentThreadIndex())->runAfter(
+    //     kTimeout,
+    //     [uuid, this]() {this->makeTasksFail(uuid);});
+    app().getIOLoop(app().getCurrentThreadIndex())->runAfter(
+        60.0,
+        [uuid, this]() {this->makeTasksFail(uuid);});
+    bool status_send_task = sendTaskToWorkers(uuid, req_body_json_ptr);
+    if (!status_send_task) {
+        LOG_ERROR << "Failed to send task " << uuid << " to RabbitMQ.";
+        makeTasksFail(uuid);
+        return;
+    }
+    LOG_INFO << "Task with uuid" << uuid << " successfully sent to RabbitMQ.";
 }
 
 void HashCrack::getCrackResult(
@@ -97,8 +122,8 @@ void HashCrack::processTaskResponde(
              << " and adding data." ;
     std::lock_guard lock_res(crack_result->mtx);
     crack_result->workers[response.getPartNumber()] = kDone;
-    if (crack_result->result["status"] == StatusTypes[kInProgress]) {
-        crack_result->result["status"] = StatusTypes[kPartialResult];
+    if (crack_result->result["status"] == JobStatusType[kInProgress]) {
+        crack_result->result["status"] = JobStatusType[kPartialResult];
     }
     for (const auto& word : response.getAnswer()) {
         crack_result->result["data"].append(word);
@@ -106,13 +131,13 @@ void HashCrack::processTaskResponde(
 
     for (auto worker : crack_result->workers) {
         if (worker.second == kWaiting ||
-            worker.second == kTimeout) {
+            worker.second == kFailed) {
             return;
         }
     }
     LOG_INFO << "Setting status READY to job with number "
              << response.getRequestId() << ".";
-    crack_result->result["status"] = StatusTypes[kReady];
+    crack_result->result["status"] = JobStatusType[kReady];
     std::lock_guard lock_store(request_store_mtx_);
     if (request_store_.find(response.getRequestId()) != request_store_.end()) {
         auto request = request_store_.at(response.getRequestId());
@@ -142,32 +167,328 @@ bool HashCrack::requestValidated(
     return true;
 }
 
-bool HashCrack::addToCrackResults(const std::string& uuid) {
-    std::lock_guard lock(crack_result_store_mtx_);
-    if (crack_result_store_.find(uuid) == crack_result_store_.end() &&
-        crack_result_store_.size() < kMaxRequestStoreSize) {
-        Json::Value json;
-        json["status"] = StatusTypes[kInProgress];
-        json["data"] = Json::Value(Json::arrayValue);
-        json["progress"] = "0%";
-        auto request_ptr = std::make_shared<CrackResult>();
-        request_ptr->result = std::move(json);
-        crack_result_store_.insert({uuid, std::move(request_ptr)});
-        return true;
+bool HashCrack::saveTaskInDb(const std::string& uuid,
+                             shared_ptr<Json::Value> json_ptr) {
+    // std::optional<bsoncxx::oid> inserted_id; // Если понадобится id объекта
+
+    auto client = app().getPlugin<MongoPlugin>()->getMongoConnection();
+    auto collection = client["MD5HashCrack"]["Results"];
+
+    mongocxx::write_concern wc;
+    wc.acknowledge_level(mongocxx::write_concern::level::k_majority);
+
+    mongocxx::options::insert insert_opts;
+    insert_opts.write_concern(wc);
+
+    auto doc = buildDocForDbInsertion(uuid, *json_ptr);
+
+    bool insert_status = insertInDb(collection, insert_opts, doc);
+    if (!insert_status) {
+        LOG_ERROR << "MongoDB insert for task " << uuid
+                  << " did not return a result.";
+        return false;
     }
-    return false;
+    return true;
 }
 
-Json::Value HashCrack::addToStorageRequests(
+// TODO: Вынести логику создания данного объекта под ответственность DTO
+bsoncxx::document::value HashCrack::buildDocForDbInsertion(
       const std::string &uuid,
-      const std::shared_ptr<Json::Value> &req_body_json_ptr) {
-    std::lock_guard lock(request_store_mtx_);
-    Json::Value json;
-    auto request_ptr = std::make_shared<Request>();
-    request_ptr->request_body = std::move(*req_body_json_ptr);
-    request_store_.insert({uuid, std::move(request_ptr)});
-    json["requestId"] = uuid;
-    return json;
+      Json::Value json) {
+    // int number_of_workers = kConfig["numberOfWorkers"].asInt();
+    int number_of_workers = 4;
+    auto workers_done_statuses = bsoncxx::builder::basic::array{};
+    for (int i = 0; i < number_of_workers; i++) {
+        workers_done_statuses.append(WorkerStatusType[kWaiting]);
+    }
+    auto creation_time = std::chrono::system_clock::now();
+    bsoncxx::document::value doc = make_document(
+        kvp("uuid", uuid),
+        kvp("hash", json["hash"].asString()),
+        kvp("maxLength", json["maxLength"].asInt()),
+        kvp("result", JobStatusType[kInProgress]),
+        kvp("passwords", bsoncxx::builder::basic::make_array()),
+        kvp("number_of_workers", number_of_workers),
+        kvp("workers_done_statuses", workers_done_statuses),
+        kvp("created_at", bsoncxx::types::b_date{creation_time}),
+        kvp("updated_at", bsoncxx::types::b_date{creation_time}));
+
+    return doc;
+}
+
+bool HashCrack::insertInDb(
+      mongocxx::collection collection,
+      const mongocxx::options::insert &insert_opts,
+      const bsoncxx::document::value &doc) {
+    auto result = collection.insert_one(doc.view(), insert_opts);
+    if (result.has_value()) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool HashCrack::sendTaskToWorkers(const std::string& uuid,
+                                  shared_ptr<Json::Value> json_ptr) {
+    boost::asio::io_context io_context;
+    AMQP::LibBoostAsioHandler handler(io_context);
+    AMQP::TcpConnection connection(&handler, AMQP::Address("rabbitmq", 5672, AMQP::Login("guest", "guest"), "/"));
+    AMQP::TcpChannel channel(&connection);
+    // auto amqpPluginPtr = app().getPlugin<AMQPClient>();
+    // // auto channel = amqpPluginPtr->createChannel(kConfig["rabbitQueueName"].asString());
+    // auto channel = amqpPluginPtr->createChannel("tasksQueue");
+
+
+    std::mutex ack_mutex;
+    std::condition_variable ack_cv;
+    bool ack_received = false;
+    bool nack_received = false;
+
+    prepareAmqpChannel(&channel, uuid, ack_mutex, ack_cv,
+                       ack_received, nack_received);
+
+    declareQueueForChannel(&channel, uuid);
+    std::thread io_thread([&]() {
+        io_context.run();
+        LOG_INFO << "Boost.Asio thread finished.";
+    });
+    bool send_task_status = sendTaskToRabbitQueue(
+        &channel, uuid, json_ptr, ack_mutex, ack_cv,
+        ack_received, nack_received);
+
+    if (connection.usable()) {
+        connection.close();
+    }
+    io_context.stop(); // Stop the event loop
+    if (io_thread.joinable()) {
+        io_thread.join();
+    }
+    if (!send_task_status) {
+        return false;
+    }
+    return true;
+}
+
+void HashCrack::prepareAmqpChannel(
+      AMQP::TcpChannel *channel,
+      const std::string &uuid,
+      std::mutex &ack_mutex,
+      std::condition_variable &ack_cv,
+      bool &ack_received,
+      bool &nack_received) {
+    // Enable Publisher Confirms (ACKs/NACKs)
+    channel->confirmSelect()
+        .onSuccess([&]() {
+            LOG_INFO << "Publisher confirms enabled for task " << uuid;
+        })
+        .onAck([&](uint64_t deliveryTag, bool multiple) {
+            LOG_INFO << "Got delivery from Rabbit on tag " << deliveryTag
+                     << " for request " << uuid
+                     << " and multiple is " << multiple;
+            std::lock_guard lock(ack_mutex);
+            ack_received = true;
+            ack_cv.notify_one();
+        })
+        .onNack([&](uint64_t deliveryTag, bool multiple, bool requeue) {
+            LOG_WARN << "Didn't get delivery from Rabbit on tag " << deliveryTag
+                     << " for request " << uuid
+                     << " and multiple is " << multiple;
+            std::lock_guard lock(ack_mutex);
+            nack_received = true;
+            ack_cv.notify_one();
+        })
+        .onError([&](const char* message) {
+            LOG_ERROR << "Error enabling publisher confirms for task " << uuid
+                      << ": " << message;
+            // Signal failure immediately if confirms can't be enabled
+            std::lock_guard lock(ack_mutex);
+            nack_received = true; // Treat as NACK
+            ack_cv.notify_one();
+        });
+}
+
+void HashCrack::declareQueueForChannel(
+      AMQP::TcpChannel *channel,
+      const std::string &uuid) {
+    // std::string rabbit_queue_name = kConfig["rabbitQueueName"].asString();
+    std::string rabbit_queue_name = "tasksQueue";
+    channel->declareQueue(rabbit_queue_name, AMQP::durable)
+        .onSuccess([](const std::string &name,
+                         uint32_t messageCount,
+                         uint32_t consumerCount) {
+            LOG_INFO << "Queue '" << name << "' has been declared with "
+                     << messageCount << " messages and "
+                     << consumerCount << " consumers";
+        })
+        .onError([&](const char* message) {
+             LOG_ERROR << "Error declaring queue '" << rabbit_queue_name
+                       << "' for task " << uuid << ": " << message;
+        });
+}
+
+bool HashCrack::sendTaskToRabbitQueue(
+      AMQP::TcpChannel *channel,
+      const std::string &uuid,
+      shared_ptr<Json::Value> json_ptr,
+      std::mutex &ack_mutex,
+      std::condition_variable &ack_cv,
+      bool &ack_received,
+      bool &nack_received) {
+
+    bool all_parts_sent = true;
+    // int total_parts_count = kConfig["numberOfWorkers"].asInt();
+    int total_parts_count = 4;
+    for (int part = 1; part <= total_parts_count; ++part) {
+
+        std::string message =
+            buildMessageForRabbit(uuid, *json_ptr, part, total_parts_count);
+
+        // Reset ACK flags for new message
+        ack_received = false;
+        nack_received = false;
+
+        // int rabbitmq_max_retries = kConfig["rabbitMaxRetries"].asInt();
+        int rabbitmq_max_retries = 3;
+        // Retry logic for publishing each part
+        bool part_sent = false;
+        for (int attempt = 1; attempt <= rabbitmq_max_retries; ++attempt) {
+             ack_received = false; // Reset before publish
+             nack_received = false;
+
+            if (!channel->ready()) {
+                 LOG_WARN << "RabbitMQ channel not ready (attempt "
+                          << attempt << ") for task " << uuid
+                          << ", part " << part;
+                 continue; // Try again
+            }
+
+            try {
+                // std::string rabbitmq_queue_name =
+                //     kConfig["rabbitQueueName"].asString();
+                std::string rabbitmq_queue_name = "tasksQueue";
+                channel->publish("", rabbitmq_queue_name, message);
+                LOG_INFO << "Published part " << part << "/"
+                         << total_parts_count << " for task " << uuid
+                         << " (attempt " << attempt << ")";
+
+                std::unique_lock lock(ack_mutex);
+                // auto wait_duration =
+                //     std::chrono::duration_cast<std::chrono::seconds>(
+                //     std::chrono::seconds(kConfig["timeout"].asInt())) /
+                //     (kNumberOfWorkers * total_parts_count);
+                auto wait_duration =
+                    std::chrono::duration_cast<std::chrono::seconds>(
+                    std::chrono::seconds(60)) /
+                        (kNumberOfWorkers * total_parts_count);
+
+                if (ack_cv.wait_for(lock, wait_duration, [&] {
+                        return ack_received || nack_received;
+                    })) {
+                    if (ack_received) {
+                        part_sent = true;
+                        LOG_INFO << "ACK received for part " << part
+                                 << "on task " << uuid;
+                        break; // Part sent successfully
+                    } else {
+                         LOG_WARN << "NACK received for part " << part
+                                  << " (attempt " << attempt << ") on task "
+                                  << uuid;
+                    }
+                } else {
+                    LOG_WARN << "Timeout waiting for ACK/NACK for part " << part
+                             << " (attempt " << attempt << ") on task " << uuid;
+                }
+
+            } catch (const AMQP::Exception& e) {
+                LOG_ERROR << "RabbitMQ publish exception (attempt " << attempt
+                          << ") for task " << uuid << ", part " << part << ": "
+                          << e.what();
+                return false;
+            } catch (const std::exception& e) {
+                LOG_ERROR << "Generic exception during RabbitMQ publish "
+                          <<"(attempt " << attempt << ") for task " << uuid
+                          << ", part " << part << ": " << e.what();
+                return false;
+            }
+        }
+
+        if (!part_sent) {
+            LOG_ERROR << "Failed to send part " << part << " for task "
+                      << uuid << " after " << rabbitmq_max_retries
+                      << " attempts or timeout.";
+            all_parts_sent = false;
+            break;
+        }
+    }
+    return all_parts_sent;
+}
+
+std::string HashCrack::buildMessageForRabbit(
+      const std::string &uuid,
+      const Json::Value &json,
+      const int &part,
+      const int &total_parts_count) {
+    // Construct JSON message for the work unit
+    Json::Value work_unit_json =
+        ManagerToWorkerDTO(uuid,
+                           part - 1,
+                           total_parts_count,
+                           json["hash"].asString(),
+                           json["maxLength"].asInt(),
+                           Alphabet).toJson();
+
+    Json::StreamWriterBuilder writer;
+    std::string message = writeString(writer, work_unit_json);
+    return message;
+}
+
+void HashCrack::makeTasksFail(const std::string &uuid) {
+    auto client = app().getPlugin<MongoPlugin>()->getMongoConnection();
+    try {
+        auto collection = client["MD5HashCrack"]["Results"];
+
+        auto filter = make_document(kvp("uuid", uuid));
+        auto array_update = make_document(kvp("$set", make_document(
+            kvp("workers_done_statuses.$[elem]", WorkerStatusType[kFailed]))));
+
+        mongocxx::options::update opts;
+        bsoncxx::array::value array_filter =
+            bsoncxx::builder::basic::make_array(
+                make_document(kvp("elem", WorkerStatusType[kWaiting])));
+        opts.array_filters(array_filter.view());
+
+        auto result =
+            collection.update_one(filter.view(), array_update.view(), opts);
+/*
+ * TODO:
+ * - Найти способ узнавать, сколько записей стало Failed. Если все, то ставить Error, иначе PartialResult.
+ * - Скорее всего надо смотреть на статус до этого - если был Waiting, то Error ставить. Если был PartialResult, то его и оставлять.
+ *
+*/
+        if (result && result->modified_count() > 0) {
+            if (true) {
+                collection.update_one(
+                    filter.view(),
+                    make_document(kvp("$set", make_document(
+                        kvp("Result", JobStatusType[kError])))));
+                LOG_INFO << "Task " << uuid << " status updated to ERROR.";
+            } else {
+                collection.update_one(
+                    filter.view(),
+                    make_document(kvp("$set", make_document(
+                        kvp("Result", JobStatusType[kPartialResult])))));
+                LOG_INFO << "Task " << uuid
+                         << " status updated to PARTIAL_RESULT.";
+            }
+        } else {
+            LOG_INFO << "No workers failed on " << uuid;
+        }
+
+    } catch (const std::exception& e) {
+        LOG_FATAL << "Failed to update task status to ERROR for " << uuid
+                  << ": " << e.what();
+        throw;
+    }
 }
 
 /*
@@ -180,75 +501,76 @@ event loop не забивается, т.к. запросы выполняютс
 только последний выполненный запрос начинает настоящую работу
 */
 
-void HashCrack::notifyWorkersOnTask(std::string &&uuid) {
-    LOG_INFO << "Checking workers for " << uuid << " request.";
-    std::vector<std::string> endpoints = readEndpointsFromFile();
-
-    std::unique_lock lock(request_store_mtx_);
-    auto request = request_store_.at(uuid);
-    lock.unlock();
-
-    auto live_endpoints = std::make_shared<std::vector<std::string>>();
-    auto remaining_requests =
-        std::make_shared<std::atomic<int>>(static_cast<int>(endpoints.size()));
-
-    for (const auto& endpoint : endpoints) {
-        auto client = HttpClient::newHttpClient(endpoint);
-        auto req = HttpRequest::newHttpRequest();
-        req->setMethod(Get);
-        req->setPath("/internal/api/worker/hash/crack/task");
-
-        double kEndpointHealthStatusTimeout = 3.0;
-        client->sendRequest(req,
-            [endpoint, live_endpoints, remaining_requests, uuid, request, this]
-            (ReqResult result, const HttpResponsePtr &response) {
-            if (result == ReqResult::Ok &&
-                response->getStatusCode() == k200OK) {
-                live_endpoints->push_back(endpoint);
-                LOG_INFO << "Endpoint " << endpoint << " is up.";
-            } else {
-                LOG_INFO << "Endpoint " << endpoint << " is down.";
-            }
-
-            // Check if all requests are completed
-            if (--(*remaining_requests) == 0) {
-                this->sendTaskToWorkers(live_endpoints, uuid, request);
-            }
-        }, kEndpointHealthStatusTimeout);
-    }
-}
+// void HashCrack::notifyWorkersOnTask(std::string &&uuid) {
+//     LOG_INFO << "Checking workers for " << uuid << " request.";
+//     std::vector<std::string> endpoints = readEndpointsFromFile();
+//
+//     std::unique_lock lock(request_store_mtx_);
+//     auto request = request_store_.at(uuid);
+//     lock.unlock();
+//
+//     auto live_endpoints = std::make_shared<std::vector<std::string>>();
+//     auto remaining_requests =
+//         std::make_shared<std::atomic<int>>(static_cast<int>(endpoints.size()));
+//
+//     for (const auto& endpoint : endpoints) {
+//         auto client = HttpClient::newHttpClient(endpoint);
+//         auto req = HttpRequest::newHttpRequest();
+//         req->setMethod(Get);
+//         req->setPath("/internal/api/worker/hash/crack/task");
+//
+//         double kEndpointHealthStatusTimeout = 3.0;
+//         client->sendRequest(req,
+//             [endpoint, live_endpoints, remaining_requests, uuid, request, this]
+//             (ReqResult result, const HttpResponsePtr &response) {
+//             if (result == ReqResult::Ok &&
+//                 response->getStatusCode() == k200OK) {
+//                 live_endpoints->push_back(endpoint);
+//                 LOG_INFO << "Endpoint " << endpoint << " is up.";
+//             } else {
+//                 LOG_INFO << "Endpoint " << endpoint << " is down.";
+//             }
+//
+//             // Check if all requests are completed
+//             if (--(*remaining_requests) == 0) {
+//                 this->sendTaskToWorkers(live_endpoints, uuid, request);
+//             }
+//         }, kEndpointHealthStatusTimeout);
+//     }
+// }
 
 //TODO:
 // - Вынести инициализацию crackResultStore_.
 // - Для этого надо заранее составить список живых воркеров.
-void HashCrack::sendTaskToWorkers(
-      std::shared_ptr<std::vector<std::string>> live_endpoints,
-      const std::string &uuid,
-      const std::shared_ptr<Request> &request) {
 
-    LOG_INFO << "All health checks done. Live endpoints: "
-             << live_endpoints->size();
-
-    // Now send tasks to live endpoints
-    int part_count = static_cast<int>(live_endpoints->size());
-
-    if (part_count == 0) {
-        LOG_ERROR
-            << "All endpoints are down. "
-            << "Setting error-status to request with number " << uuid << "." ;
-        std::lock_guard lock(crack_result_store_mtx_);
-        crack_result_store_[uuid]->result["status"] = StatusTypes[kError];
-        return;
-    }
-    std::unique_lock lock(request->mtx);
-    request->live_endpoints = live_endpoints;
-    lock.unlock();
-
-    for (int part_number = 0; part_number < part_count; ++part_number) {
-        sendTaskPartToWorker(uuid, part_count, part_number,
-                             request, live_endpoints);
-    }
-}
+// void HashCrack::sendTaskToWorkers(
+//       std::shared_ptr<std::vector<std::string>> live_endpoints,
+//       const std::string &uuid,
+//       const std::shared_ptr<Request> &request) {
+//
+//     LOG_INFO << "All health checks done. Live endpoints: "
+//              << live_endpoints->size();
+//
+//     // Now send tasks to live endpoints
+//     int part_count = static_cast<int>(live_endpoints->size());
+//
+//     if (part_count == 0) {
+//         LOG_ERROR
+//             << "All endpoints are down. "
+//             << "Setting error-status to request with number " << uuid << "." ;
+//         std::lock_guard lock(crack_result_store_mtx_);
+//         crack_result_store_[uuid]->result["status"] = JobStatusType[kError];
+//         return;
+//     }
+//     std::unique_lock lock(request->mtx);
+//     request->live_endpoints = live_endpoints;
+//     lock.unlock();
+//
+//     for (int part_number = 0; part_number < part_count; ++part_number) {
+//         sendTaskPartToWorker(uuid, part_count, part_number,
+//                              request, live_endpoints);
+//     }
+// }
 
 void HashCrack::sendTaskPartToWorker(
       std::string uuid, int part_count, int part_number,
@@ -295,7 +617,7 @@ void HashCrack::processWorkersRespond(const std::string &uuid,
     if (crack_result->workers[part_number] == kWaiting) {
         LOG_INFO << "Timer for worker number " << part_number
                  << " on job number " << uuid << " is out.";
-        crack_result->workers[part_number] = kTimeout;
+        crack_result->workers[part_number] = kFailed;
     }
     else {
         return;
@@ -306,12 +628,12 @@ void HashCrack::processWorkersRespond(const std::string &uuid,
         }
     }
     LOG_INFO << "Setting status ERROR to job with number " << uuid << ".";
-    crack_result->result["status"] = StatusTypes[kError];
+    crack_result->result["status"] = JobStatusType[kError];
 }
 
 bool HashCrack::checkIfTimeout(shared_ptr<CrackResult> &crack_result,
                                const WorkerToManagerDTO &response) {
-    if (crack_result->workers[response.getPartNumber()] == kTimeout) {
+    if (crack_result->workers[response.getPartNumber()] == kFailed) {
         LOG_INFO
             << "Ignoring responce from worker " << response.getPartNumber()
             << " on request number " << response.getRequestId()

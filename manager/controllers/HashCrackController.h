@@ -4,6 +4,14 @@
 
 #pragma once
 
+#include <amqpcpp.h>
+#include <openssl/types.h>
+#include <amqpcpp/linux_tcp/tcphandler.h>
+#include <amqpcpp/linux_tcp/tcpparent.h>
+#include <amqpcpp/linux_tcp/tcpconnection.h>
+#include <amqpcpp/linux_tcp/tcpchannel.h>
+#include <bsoncxx/builder/stream/document.hpp>
+#include <mongocxx/collection.hpp>
 #include <drogon/HttpClient.h>
 #include <drogon/HttpController.h>
 
@@ -38,11 +46,17 @@ public:
 
 protected:
 
-    const std::string StatusTypes[4] {
+    const std::string JobStatusType[4] {
         "IN_PROGRESS",
         "READY",
         "ERROR",
         "PARTIAL_RESULT"
+    };
+
+    const std::string WorkerStatusType[3] {
+        "DONE",
+        "FAILED",
+        "WAITING",
     };
 
     const std::vector<std::string> Alphabet{
@@ -69,7 +83,7 @@ protected:
 
     enum WorkersStatus {
         kDone,
-        kTimeout,
+        kFailed,
         kWaiting
     };
 
@@ -93,7 +107,59 @@ protected:
     static bool requestValidated(
         const std::shared_ptr<Json::Value> &req_body_json_ptr);
 
-    bool addToCrackResults(const std::string &uuid);
+    bool saveTaskInDb(const std::string &uuid,
+        shared_ptr<Json::Value> json_ptr);
+
+    bsoncxx::document::value buildDocForDbInsertion(
+        const std::string &uuid,
+        Json::Value json);
+
+    bool insertInDb(
+        mongocxx::collection collection, // Потенциально опасно (const!)
+        const mongocxx::options::insert &insert_opts,
+        const bsoncxx::document::value &doc);
+
+    bool sendTaskToWorkers(
+        const std::string &uuid,
+        shared_ptr<Json::Value> json_ptr);
+
+    void prepareAmqpChannel(
+        AMQP::TcpChannel *channel,
+        const string &uuid,
+        std::mutex &ack_mutex,
+        std::condition_variable &ack_cv,
+        bool &ack_received,
+        bool &nack_received);
+
+    void declareQueueForChannel(
+        AMQP::TcpChannel *channel,
+        const std::string &uuid);
+
+    bool sendTaskToRabbitQueue(
+        AMQP::TcpChannel *channel,
+        const std::string &uuid,
+        shared_ptr<Json::Value> json_ptr,
+        std::mutex &ack_mutex,
+        std::condition_variable &ack_cv,
+        bool &ack_received,
+        bool &nack_received);
+
+    std::string buildMessageForRabbit(
+        const std::string &uuid,
+        const Json::Value &json,
+        const int &part,
+        const int &total_parts_count);
+
+    void makeTasksFail(const std::string &uuid);
+
+
+
+
+
+
+
+
+
 
     Json::Value addToStorageRequests(
         const std::string &uuid,
@@ -116,11 +182,6 @@ protected:
     void setProgressValue(
         std::shared_ptr<CrackResult> &crack_result,
         const std::string& request_id);
-
-    void sendTaskToWorkers(
-        std::shared_ptr<std::vector<std::string>> live_endpoints,
-        const std::string &uuid,
-        const std::shared_ptr<Request> &request);
 
     void sendTaskPartToWorker(
         std::string uuid, int part_count, int part_number,
@@ -151,6 +212,13 @@ protected:
     // const int kMaxRequestStoreSize =
     //     std::stoi(std::getenv("MAX_QUEUE_SIZE"));
     const int kMaxRequestStoreSize = 10;
+    // const int kMongoMaxRetries =
+    //     std::stoi(std::getenv("MONGO_MAX_RETRIES"));
+    const int kMongoMaxRetries = 3;
+    // const int kNumberOfWorkers =
+    //     std::stoi(std::getenv("NUMBER_OF_WORKERS"));
+    const int kNumberOfWorkers = 4;
+    const Json::Value kConfig = app().getCustomConfig();
     std::mutex request_store_mtx_;
     std::mutex crack_result_store_mtx_;
 };

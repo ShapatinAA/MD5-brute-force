@@ -25,10 +25,6 @@ set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "" FORCE)
 # Source files
 add_executable(${PROJECT_NAME}
         main.cc
-        controllers/HashCrackController.cpp
-        controllers/HashCrackController.h
-        models/ManagerToWorkerDTO.h
-        models/WorkerToManagerDTO.h
 )
 
 # 3. Find SimpleAmqpClient using multiple methods
@@ -54,6 +50,7 @@ aux_source_directory(controllers CTL_SRC)
 aux_source_directory(filters FILTER_SRC)
 aux_source_directory(plugins PLUGIN_SRC)
 aux_source_directory(models MODEL_SRC)
+aux_source_directory(util UTIL_SRC)
 
 drogon_create_views(${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/views
                     ${CMAKE_CURRENT_BINARY_DIR})
@@ -69,6 +66,7 @@ target_sources(${PROJECT_NAME} PRIVATE
         ${FILTER_SRC}
         ${PLUGIN_SRC}
         ${MODEL_SRC}
+        ${UTIL_SRC}
 )
 
 add_subdirectory(test)
