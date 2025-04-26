@@ -53,10 +53,11 @@ protected:
         "PARTIAL_RESULT"
     };
 
-    const std::string WorkerStatusType[3] {
+    const std::string WorkerStatusType[4] {
         "DONE",
         "FAILED",
         "WAITING",
+        "DID_NOT_DISTRIBUTE"
     };
 
     const std::vector<std::string> Alphabet{
@@ -84,7 +85,8 @@ protected:
     enum WorkersStatus {
         kDone,
         kFailed,
-        kWaiting
+        kWaiting,
+        kDidNotDistribute
     };
 
     struct Request
@@ -115,11 +117,11 @@ protected:
         Json::Value json);
 
     bool insertInDb(
-        mongocxx::collection collection, // Потенциально опасно (const!)
+        mongocxx::collection &collection, // Потенциально опасно (const!)
         const mongocxx::options::insert &insert_opts,
         const bsoncxx::document::value &doc);
 
-    bool sendTaskToWorkers(
+    void sendTaskToWorkers(
         const std::string &uuid,
         shared_ptr<Json::Value> json_ptr);
 
@@ -135,7 +137,7 @@ protected:
         AMQP::TcpChannel *channel,
         const std::string &uuid);
 
-    bool sendTaskToRabbitQueue(
+    void distributeTask(
         AMQP::TcpChannel *channel,
         const std::string &uuid,
         shared_ptr<Json::Value> json_ptr,
@@ -144,13 +146,68 @@ protected:
         bool &ack_received,
         bool &nack_received);
 
+    bool sendTaskPartToRabbit(
+        AMQP::TcpChannel *channel,
+        const std::string &uuid,
+        shared_ptr<Json::Value> json_ptr,
+        std::mutex &ack_mutex,
+        std::condition_variable &ack_cv,
+        bool &ack_received,
+        bool &nack_received,
+        const int &part,
+        const int &total_parts_count);
+
+    bool trySendingPart(
+        AMQP::TcpChannel *channel,
+        const std::string &uuid,
+        std::string message,
+        std::mutex &ack_mutex,
+        std::condition_variable &ack_cv,
+        bool &ack_received,
+        bool &nack_received,
+        const int &part);
+
+    bool publishToRabbit(
+      AMQP::TcpChannel *channel,
+      const std::string &uuid,
+      std::string message,
+      std::mutex &ack_mutex,
+      std::condition_variable &ack_cv,
+      bool &ack_received,
+      bool &nack_received,
+      const int &part);
+
     std::string buildMessageForRabbit(
         const std::string &uuid,
         const Json::Value &json,
         const int &part,
         const int &total_parts_count);
 
-    void makeTasksFail(const std::string &uuid);
+    void makeJobPartWaiting(
+        const std::string &uuid,
+        const int &part);
+
+    void makeJobPartDone(const WorkerToManagerDTO &message);
+
+    void makeJobFail(const std::string &uuid);
+
+    void updateJobStatusInDb(const std::string &uuid,
+                             mongocxx::collection* collection,
+                             const bsoncxx::document::value &filter,
+                             const bsoncxx::document::value &update,
+                             const mongocxx::options::update &opts,
+                             bool &&set_error);
+
+    bool checkIfAllWorkersHaveType(
+        mongocxx::collection* collection,
+        const bsoncxx::document::value &filter,
+        WorkersStatus &&worker_status);
+
+    void setStatus(
+      mongocxx::collection* collection,
+      const bsoncxx::document::value &filter,
+      const std::string &uuid,
+      StatusCode &&job_status);
 
 
 
