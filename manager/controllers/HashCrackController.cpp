@@ -6,6 +6,7 @@
 #include "ManagerToWorkerDTO.h"
 #include "WorkerToManagerDTO.h"
 #include "../plugins/MongoPlugin.h"
+#include "Alphabet.h"
 
 #include <fstream>
 #include <regex>
@@ -26,11 +27,11 @@
 
 using namespace drogon;
 using namespace bsoncxx;
+using namespace CrackingAlphabet;
 
 using builder::basic::make_document;
 using builder::basic::kvp;
 using builder::basic::make_array;
-
 
 void HashCrack::crackInitialize(
       const HttpRequestPtr &req,
@@ -445,8 +446,12 @@ void HashCrack::makeJobPartWaiting(const std::string &uuid,
                 WorkerStatusType[kWaiting]),
             kvp("updated_at",
                 types::b_date{std::chrono::system_clock::now()}))));
+        mongocxx::options::update opts;
+        mongocxx::write_concern wc;
+        wc.acknowledge_level(mongocxx::write_concern::level::k_majority);
+        opts.write_concern(wc);
         auto result =
-            collection.update_one(filter.view(), update.view());
+            collection.update_one(filter.view(), update.view(), opts);
 
         if (!result.has_value() || result->modified_count() == 0) {
             throw std::runtime_error("Failed to set worker status " \
@@ -474,7 +479,7 @@ void HashCrack::makeJobPartDone(const WorkerToManagerDTO &message) {
         auto filter = make_document(kvp("$and", make_array(
             make_document(kvp("uuid", uuid)),
             make_document(kvp("workers_done_statuses." + part_number,
-                WorkerStatusType[kWaiting])))));
+                              WorkerStatusType[kWaiting])))));
 
         auto update = make_document(kvp("$set", make_document(
             kvp("workers_done_statuses." + part_number,
@@ -484,7 +489,10 @@ void HashCrack::makeJobPartDone(const WorkerToManagerDTO &message) {
                     make_document(kvp("$each", passwords))))),
                     kvp("updated_at",
                         types::b_date{std::chrono::system_clock::now()}))));
+        mongocxx::write_concern wc;
+        wc.acknowledge_level(mongocxx::write_concern::level::k_majority);
         mongocxx::options::update opts;
+        opts.write_concern(wc);
 
         updateJobStatusInDb(uuid, &collection, filter,
                             update, opts, false);
@@ -513,6 +521,9 @@ void HashCrack::makeJobFail(const std::string &uuid) {
                 make_document(kvp("elem", make_document(kvp("$in", make_array(WorkerStatusType[kWaiting], WorkerStatusType[kDidNotDistribute])))))
                 );
         opts.array_filters(array_filter.view());
+        mongocxx::write_concern wc;
+        wc.acknowledge_level(mongocxx::write_concern::level::k_majority);
+        opts.write_concern(wc);
 
         updateJobStatusInDb(uuid, &collection, filter, array_update, opts, true);
 
@@ -564,7 +575,7 @@ bool HashCrack::checkIfAllWorkersHaveType(
                 make_document(
                     kvp("workers_done_statuses",
                     make_document(kvp("$elemMatch", make_document(
-                        kvp("$eq" ,WorkerStatusType[worker_status])))))
+                        kvp("$eq", WorkerStatusType[worker_status])))))
                 )))));
     return number_of_found_docs > 0;
 }
@@ -574,10 +585,18 @@ void HashCrack::setStatus(
       const bsoncxx::document::value &filter,
       const std::string &uuid,
       StatusCode &&job_status) {
+    mongocxx::write_concern wc;
+    wc.acknowledge_level(mongocxx::write_concern::level::k_majority);
+    mongocxx::options::update opts;
+    opts.write_concern(wc);
+
     collection->update_one(
                 filter.view(),
                 make_document(kvp("$set", make_document(
-                    kvp("Result", JobStatusType[job_status])))));
+                    kvp("Result", JobStatusType[job_status]),
+                    kvp("updated_at",
+                        types::b_date{std::chrono::system_clock::now()})))),
+                        opts);
     LOG_INFO << "Task " << uuid
              << " status updated to "<< JobStatusType[job_status] << ".";
 }

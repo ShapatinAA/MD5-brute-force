@@ -16,8 +16,11 @@
 #include <drogon/HttpController.h>
 
 #include "WorkerToManagerDTO.h"
+#include "CrackStatuses.h"
 
 using namespace drogon;
+using namespace CrackStatuses;
+
 
 class HashCrack : public HttpController<HashCrack> {
 public:
@@ -46,25 +49,11 @@ public:
 
 protected:
 
-    const std::string JobStatusType[4] {
-        "IN_PROGRESS",
-        "READY",
-        "ERROR",
-        "PARTIAL_RESULT"
-    };
-
-    const std::string WorkerStatusType[4] {
-        "DONE",
-        "FAILED",
-        "WAITING",
-        "DID_NOT_DISTRIBUTE"
-    };
-
-    const std::vector<std::string> Alphabet{
-        "0", "1", "2", "3", "4", "5", "6", "7", "8",
-        "9", "a", "b", "c", "d", "e", "f", "g", "h",
-        "i", "j", "k", "l", "m", "n", "o", "p", "q",
-        "r", "s", "t", "u", "v", "w", "x", "y", "z"};
+    // const std::vector<std::string> Alphabet{
+    //     "0", "1", "2", "3", "4", "5", "6", "7", "8",
+    //     "9", "a", "b", "c", "d", "e", "f", "g", "h",
+    //     "i", "j", "k", "l", "m", "n", "o", "p", "q",
+    //     "r", "s", "t", "u", "v", "w", "x", "y", "z"};
 
 /*
  * TODO:
@@ -73,21 +62,6 @@ protected:
  *  - интерпретировать Value::Json.
  *  - Добавить необходимые DTO для отправки пользователю.
 */
-
-    enum StatusCode
-    {
-        kInProgress,
-        kReady,
-        kError,
-        kPartialResult
-    };
-
-    enum WorkersStatus {
-        kDone,
-        kFailed,
-        kWaiting,
-        kDidNotDistribute
-    };
 
     struct Request
     {
