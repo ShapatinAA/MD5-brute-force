@@ -44,4 +44,17 @@ public:
           hash(hash),
           max_length(max_length),
           alphabet(alphabet) {}
+
+    ManagerToWorkerDTO(const std::string &request_id,
+                       const int &part_number,
+                       const int &part_count,
+                       const bsoncxx::stdx::string_view &hash,
+                       const int32_t &max_length,
+                       vector<string> alphabet)
+        : request_id(request_id),
+          part_number(part_number),
+          part_count(part_count),
+          hash(hash),
+          max_length(max_length),
+          alphabet(alphabet) {}
 };

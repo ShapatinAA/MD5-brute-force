@@ -49,12 +49,6 @@ public:
 
 protected:
 
-    // const std::vector<std::string> Alphabet{
-    //     "0", "1", "2", "3", "4", "5", "6", "7", "8",
-    //     "9", "a", "b", "c", "d", "e", "f", "g", "h",
-    //     "i", "j", "k", "l", "m", "n", "o", "p", "q",
-    //     "r", "s", "t", "u", "v", "w", "x", "y", "z"};
-
 /*
  * TODO:
  *  - Заменить Json-поля во всех классах на поля с конкретными типами и именами.
@@ -99,20 +93,20 @@ protected:
         const std::string &uuid,
         shared_ptr<Json::Value> json_ptr);
 
-    void prepareAmqpChannel(
-        AMQP::TcpChannel *channel,
+    bool prepareAmqpChannel(
+        AMQP::TcpChannel &channel,
         const string &uuid,
         std::mutex &ack_mutex,
         std::condition_variable &ack_cv,
         bool &ack_received,
         bool &nack_received);
 
-    void declareQueueForChannel(
-        AMQP::TcpChannel *channel,
+    bool declareQueueForChannel(
+        AMQP::TcpChannel &channel,
         const std::string &uuid);
 
     void distributeTask(
-        AMQP::TcpChannel *channel,
+        AMQP::TcpChannel &channel,
         const std::string &uuid,
         shared_ptr<Json::Value> json_ptr,
         std::mutex &ack_mutex,
@@ -121,7 +115,7 @@ protected:
         bool &nack_received);
 
     bool sendTaskPartToRabbit(
-        AMQP::TcpChannel *channel,
+        AMQP::TcpChannel &channel,
         const std::string &uuid,
         shared_ptr<Json::Value> json_ptr,
         std::mutex &ack_mutex,
@@ -132,7 +126,7 @@ protected:
         const int &total_parts_count);
 
     bool trySendingPart(
-        AMQP::TcpChannel *channel,
+        AMQP::TcpChannel &channel,
         const std::string &uuid,
         std::string message,
         std::mutex &ack_mutex,
@@ -142,7 +136,7 @@ protected:
         const int &part);
 
     bool publishToRabbit(
-      AMQP::TcpChannel *channel,
+      AMQP::TcpChannel &channel,
       const std::string &uuid,
       std::string message,
       std::mutex &ack_mutex,
@@ -166,22 +160,24 @@ protected:
     void makeJobFail(const std::string &uuid);
 
     void updateJobStatusInDb(const std::string &uuid,
-                             mongocxx::collection* collection,
-                             const bsoncxx::document::value &filter,
-                             const bsoncxx::document::value &update,
+                             mongocxx::collection &collection,
+                             const bsoncxx::document::value &filter_one,
+                             const bsoncxx::document::value &filter_all,
+                             const bsoncxx::document::value &update_one,
+                             const bsoncxx::document::value &update_all,
                              const mongocxx::options::update &opts,
-                             bool &&set_error);
+                             StatusCode &&status);
 
-    bool checkIfAllWorkersHaveType(
-        mongocxx::collection* collection,
-        const bsoncxx::document::value &filter,
-        WorkersStatus &&worker_status);
-
-    void setStatus(
-      mongocxx::collection* collection,
-      const bsoncxx::document::value &filter,
+    bsoncxx::document::value makeFilterForFinalType(
       const std::string &uuid,
-      StatusCode &&job_status);
+      WorkersStatus &&worker_status,
+      const std::string &part_number);
+
+    bsoncxx::document::value makeUpdateForFinalType(
+      WorkersStatus &&worker_status,
+      StatusCode &&status_code,
+      const std::string &part_number,
+      const bsoncxx::builder::basic::array &passwords);
 
 
 
@@ -250,6 +246,7 @@ protected:
     //     std::stoi(std::getenv("NUMBER_OF_WORKERS"));
     const int kNumberOfWorkers = 4;
     const Json::Value kConfig = app().getCustomConfig();
+    const Json::Value timeout = app().getCustomConfig()["timeout"];
     std::mutex request_store_mtx_;
     std::mutex crack_result_store_mtx_;
 };

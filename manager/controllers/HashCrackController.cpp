@@ -20,6 +20,8 @@
 #include <amqpcpp/libboostasio.h>
 #include <amqpcpp/linux_tcp/tcpchannel.h>
 
+#include <amqpcpp/envelope.h>
+
 
 #include <amqpcpp.h>
 #include <amqpcpp/libboostasio.h>
@@ -58,13 +60,15 @@ void HashCrack::crackInitialize(
     LOG_INFO << "Task " << uuid << " saved to MongoDB.";
     LOG_INFO << "Sending uuid" << uuid << " to user.";
     callback(HttpResponse::newHttpJsonResponse(Json::Value(uuid)));
+    app().getIOLoop(app().getCurrentThreadIndex())->runAfter(0.0, [uuid, req_body_json_ptr, this]() {
+        sendTaskToWorkers(uuid, req_body_json_ptr);
+    });
     // app().getIOLoop(app().getCurrentThreadIndex())->runAfter(
     //     kTimeout,
     //     [uuid, this]() {this->makeTasksFail(uuid);});
     app().getIOLoop(app().getCurrentThreadIndex())->runAfter(
         60.0,
         [uuid, this]() {this->makeJobFail(uuid);});
-    sendTaskToWorkers(uuid, req_body_json_ptr);
     LOG_INFO << "Finished sending task " << uuid << " to RabbitMQ.";
 }
 
@@ -158,21 +162,26 @@ bool HashCrack::requestValidated(
 
 bool HashCrack::saveTaskInDb(const std::string& uuid,
                              shared_ptr<Json::Value> json_ptr) {
-    auto client = app().getPlugin<MongoPlugin>()->getMongoConnection();
-    auto collection = client["MD5HashCrack"]["Results"];
+    try {
+        auto client = app().getPlugin<MongoPlugin>()->getMongoConnection();
+        auto collection = client["MD5HashCrack"]["Results"];
 
-    mongocxx::write_concern wc;
-    wc.acknowledge_level(mongocxx::write_concern::level::k_majority);
+        mongocxx::write_concern wc;
+        wc.acknowledge_level(mongocxx::write_concern::level::k_majority);
 
-    mongocxx::options::insert insert_opts;
-    insert_opts.write_concern(wc);
+        mongocxx::options::insert insert_opts;
+        insert_opts.write_concern(wc);
 
-    auto doc = buildDocForDbInsertion(uuid, *json_ptr);
+        auto doc = buildDocForDbInsertion(uuid, *json_ptr);
 
-    bool insert_status = insertInDb(collection, insert_opts, doc);
-    if (!insert_status) {
-        LOG_ERROR << "MongoDB insert for task " << uuid
-                  << " did not return a result.";
+        bool insert_status = insertInDb(collection, insert_opts, doc);
+        if (!insert_status) {
+            LOG_ERROR << "MongoDB insert for task " << uuid
+                      << " did not return a result.";
+            return false;
+        }
+    } catch (const std::exception &e) {
+        LOG_ERROR << "Failed to save task " << uuid << " in db.";
         return false;
     }
     return true;
@@ -217,98 +226,129 @@ bool HashCrack::insertInDb(
 
 void HashCrack::sendTaskToWorkers(const std::string& uuid,
                                   shared_ptr<Json::Value> json_ptr) {
-    boost::asio::io_context io_context;
-    AMQP::LibBoostAsioHandler handler(io_context);
-    AMQP::TcpConnection connection(&handler, AMQP::Address("rabbitmq", 5672, AMQP::Login("guest", "guest"), "/"));
-    AMQP::TcpChannel channel(&connection);
-    // auto amqpPluginPtr = app().getPlugin<AMQPClient>();
-    // // auto channel = amqpPluginPtr->createChannel(kConfig["rabbitQueueName"].asString());
-    // auto channel = amqpPluginPtr->createChannel("tasksQueue");
+    try {
+        // auto io_context_ptr = std::make_shared<boost::asio::io_context>();
+        // auto handler_ptr = std::make_shared<AMQP::LibBoostAsioHandler>(*(io_context_ptr.get()));
+        // //TODO: config
+        // auto connection_ptr = std::make_shared<AMQP::TcpConnection>(handler_ptr.get(), AMQP::Address("rabbitmq", 5672, AMQP::Login("guest", "guest"), "/"));
+        // auto channel_ptr = std::make_shared<AMQP::TcpChannel>(connection_ptr.get());
 
-    std::mutex ack_mutex;
-    std::condition_variable ack_cv;
-    bool ack_received = false;
-    bool nack_received = false;
+        boost::asio::io_context io_context_ptr;
+        AMQP::LibBoostAsioHandler handler_ptr(io_context_ptr);
+        //TODO: config
+        AMQP::TcpConnection connection_ptr(&handler_ptr, AMQP::Address("rabbitmq", 5672, AMQP::Login("guest", "guest"), "/"));
+        AMQP::TcpChannel channel_ptr(&connection_ptr);
 
-    prepareAmqpChannel(&channel, uuid, ack_mutex, ack_cv,
+        // auto amqpPluginPtr = app().getPlugin<AMQPClient>();
+        // // auto channel = amqpPluginPtr->createChannel(kConfig["rabbitQueueName"].asString());
+        // auto channel = amqpPluginPtr->createChannel("tasksQueue");
+
+        std::mutex ack_mutex;
+        std::condition_variable ack_cv;
+        bool ack_received = false;
+        bool nack_received = false;
+
+        if (!prepareAmqpChannel(channel_ptr, uuid, ack_mutex, ack_cv,
+                           ack_received, nack_received)) {
+            LOG_ERROR << "Preparing Amqp Channel failed, stop sending tasks.";
+            return;
+        }
+
+        if (!declareQueueForChannel(channel_ptr, uuid)) {
+            LOG_ERROR << "Declaring Amqp Channel failed, stop sending tasks.";
+            return;
+        }
+        std::thread io_thread([&]() {
+            io_context_ptr.run();
+            LOG_INFO << "Boost.Asio thread finished sending job pars for "
+                     << uuid;
+        });
+        distributeTask(channel_ptr, uuid, json_ptr, ack_mutex, ack_cv,
                        ack_received, nack_received);
 
-    declareQueueForChannel(&channel, uuid);
-    std::thread io_thread([&]() {
-        io_context.run();
-        LOG_INFO << "Boost.Asio thread finished.";
-    });
-    distributeTask(&channel, uuid, json_ptr, ack_mutex, ack_cv,
-                   ack_received, nack_received);
+        if (connection_ptr.usable()) {
+            connection_ptr.close();
+        }
+        io_context_ptr.stop(); // Stop the event loop
+        if (io_thread.joinable()) {
+            io_thread.join();
+        }
+    }
+    catch (std::exception &e) {
+        LOG_ERROR << "Error during sending task " << uuid << " to workers: "
+        << e.what();
+        throw;
+    }
 
-    if (connection.usable()) {
-        connection.close();
-    }
-    io_context.stop(); // Stop the event loop
-    if (io_thread.joinable()) {
-        io_thread.join();
-    }
 }
 
-void HashCrack::prepareAmqpChannel(
-      AMQP::TcpChannel *channel,
+bool HashCrack::prepareAmqpChannel(
+      AMQP::TcpChannel &channel,
       const std::string &uuid,
       std::mutex &ack_mutex,
       std::condition_variable &ack_cv,
       bool &ack_received,
       bool &nack_received) {
-    // Enable Publisher Confirms (ACKs/NACKs)
-    channel->confirmSelect()
-        .onSuccess([&]() {
-            LOG_INFO << "Publisher confirms enabled for task " << uuid;
-        })
-        .onAck([&](uint64_t deliveryTag, bool multiple) {
-            LOG_INFO << "Got delivery from Rabbit on tag " << deliveryTag
-                     << " for request " << uuid
-                     << " and multiple is " << multiple;
-            std::lock_guard lock(ack_mutex);
-            ack_received = true;
-            ack_cv.notify_one();
-        })
-        .onNack([&](uint64_t deliveryTag, bool multiple, bool requeue) {
-            LOG_WARN << "Didn't get delivery from Rabbit on tag " << deliveryTag
-                     << " for request " << uuid
-                     << " and multiple is " << multiple;
-            std::lock_guard lock(ack_mutex);
-            nack_received = true;
-            ack_cv.notify_one();
-        })
-        .onError([&](const char* message) {
-            LOG_ERROR << "Error enabling publisher confirms for task " << uuid
-                      << ": " << message;
-            // Signal failure immediately if confirms can't be enabled
-            std::lock_guard lock(ack_mutex);
-            nack_received = true; // Treat as NACK
-            ack_cv.notify_one();
-        });
+    try {
+        channel.confirmSelect()
+            .onSuccess([&]() {
+                LOG_INFO << "Publisher confirms enabled for task " << uuid;
+            })
+            .onAck([&](uint64_t deliveryTag, bool multiple) {
+                LOG_INFO << "Got delivery from Rabbit on tag " << deliveryTag
+                         << " for request " << uuid;
+                std::lock_guard lock(ack_mutex);
+                ack_received = true;
+                ack_cv.notify_one();
+            })
+            .onNack([&](uint64_t deliveryTag, bool multiple, bool requeue) {
+                LOG_WARN << "Didn't get delivery from Rabbit on tag " << deliveryTag
+                         << " for request " << uuid;
+                std::lock_guard lock(ack_mutex);
+                nack_received = true;
+                ack_cv.notify_one();
+            })
+            .onError([&](const char* message) {
+                LOG_ERROR << "Error enabling publisher confirms for task "
+                          << uuid << ": " << message;
+                std::lock_guard lock(ack_mutex);
+                nack_received = true; // Treat as NACK
+                ack_cv.notify_one();
+            });
+    } catch (std::exception &e) {
+        LOG_ERROR << "Error during preparing amqp channel.";
+        return false;
+    }
+    return true;
 }
 
-void HashCrack::declareQueueForChannel(
-      AMQP::TcpChannel *channel,
+bool HashCrack::declareQueueForChannel(
+      AMQP::TcpChannel &channel,
       const std::string &uuid) {
-    // std::string rabbit_queue_name = kConfig["rabbitQueueName"].asString();
-    std::string rabbit_queue_name = "tasksQueue";
-    channel->declareQueue(rabbit_queue_name, AMQP::durable)
-        .onSuccess([](const std::string &name,
-                         uint32_t messageCount,
-                         uint32_t consumerCount) {
-            LOG_INFO << "Queue '" << name << "' has been declared with "
-                     << messageCount << " messages and "
-                     << consumerCount << " consumers";
-        })
-        .onError([&](const char* message) {
-             LOG_ERROR << "Error declaring queue '" << rabbit_queue_name
-                       << "' for task " << uuid << ": " << message;
-        });
+    try {
+        // std::string rabbit_queue_name = kConfig["rabbitQueueName"].asString();
+        std::string rabbit_queue_name = "tasksQueue";
+        channel.declareQueue(rabbit_queue_name, AMQP::durable)
+            .onSuccess([](const std::string &name,
+                             uint32_t messageCount,
+                             uint32_t consumerCount) {
+                LOG_INFO << "Queue '" << name << "' has been declared with "
+                         << messageCount << " messages and "
+                         << consumerCount << " consumers";
+            })
+            .onError([&](const char* message) {
+                 LOG_ERROR << "Error declaring queue '" << rabbit_queue_name
+                           << "' for task " << uuid << ": " << message;
+            });
+    } catch (std::exception &e) {
+        LOG_ERROR << "Error during declaring amqp channel.";
+        return false;
+    }
+    return true;
 }
 
 void HashCrack::distributeTask(
-      AMQP::TcpChannel *channel,
+      AMQP::TcpChannel &channel,
       const std::string &uuid,
       shared_ptr<Json::Value> json_ptr,
       std::mutex &ack_mutex,
@@ -361,7 +401,7 @@ std::string HashCrack::buildMessageForRabbit(
 }
 
 bool HashCrack::trySendingPart(
-      AMQP::TcpChannel *channel,
+      AMQP::TcpChannel &channel,
       const std::string &uuid,
       std::string message,
       std::mutex &ack_mutex,
@@ -388,7 +428,7 @@ bool HashCrack::trySendingPart(
 }
 
 bool HashCrack::publishToRabbit(
-      AMQP::TcpChannel *channel,
+      AMQP::TcpChannel &channel,
       const std::string &uuid,
       std::string message,
       std::mutex &ack_mutex,
@@ -399,7 +439,9 @@ bool HashCrack::publishToRabbit(
     // std::string rabbitmq_queue_name =
     //     kConfig["rabbitQueueName"].asString();
     std::string rabbitmq_queue_name = "tasksQueue";
-    channel->publish("", rabbitmq_queue_name, message);
+    AMQP::Envelope envelope(message);
+    envelope.setDeliveryMode(2);
+    channel.publish("", rabbitmq_queue_name, envelope);
     LOG_INFO << "Published part " << part << " for task " << uuid;
 
     std::unique_lock lock(ack_mutex);
@@ -409,7 +451,7 @@ bool HashCrack::publishToRabbit(
     //     (kNumberOfWorkers * total_parts_count);
     auto wait_duration =
         std::chrono::duration_cast<std::chrono::seconds>(
-        std::chrono::seconds(60)) / kNumberOfWorkers;
+        std::chrono::seconds(1));
 
     if (ack_cv.wait_for(lock, wait_duration, [&] {
             return ack_received || nack_received;
@@ -430,8 +472,7 @@ bool HashCrack::publishToRabbit(
     }
 }
 
-void HashCrack::makeJobPartWaiting(const std::string &uuid,
-                                              const int &part) {
+void HashCrack::makeJobPartWaiting(const std::string &uuid, const int &part) {
     std::string part_number = to_string(part);
     try {
         auto client = app().getPlugin<MongoPlugin>()->getMongoConnection();
@@ -459,14 +500,12 @@ void HashCrack::makeJobPartWaiting(const std::string &uuid,
     }
 
     } catch (const std::exception& e) {
-        LOG_FATAL << "Failed to update task status  for " << uuid
+        LOG_ERROR << "Failed to update task status  for " << uuid
                   << ": " << e.what();
-        throw;
     }
 }
 
 void HashCrack::makeJobPartDone(const WorkerToManagerDTO &message) {
-    auto client = app().getPlugin<MongoPlugin>()->getMongoConnection();
     std::string uuid = message.getRequestId();
     std::string part_number = to_string(message.getPartNumber());
     auto passwords = builder::basic::array{};
@@ -474,132 +513,156 @@ void HashCrack::makeJobPartDone(const WorkerToManagerDTO &message) {
         passwords.append(s);
     }
     try {
+        auto client = app().getPlugin<MongoPlugin>()->getMongoConnection();
         auto collection = client["MD5HashCrack"]["Results"];
 
-        auto filter = make_document(kvp("$and", make_array(
+        auto filter_for_done = make_document(kvp("$and", make_array(
             make_document(kvp("uuid", uuid)),
             make_document(kvp("workers_done_statuses." + part_number,
                               WorkerStatusType[kWaiting])))));
 
-        auto update = make_document(kvp("$set", make_document(
-            kvp("workers_done_statuses." + part_number,
-                WorkerStatusType[kDone]),
-            kvp("$addToSet", make_document(
-                kvp("passwords",
-                    make_document(kvp("$each", passwords))))),
-                    kvp("updated_at",
-                        types::b_date{std::chrono::system_clock::now()}))));
+        auto filter_for_ready = makeFilterForFinalType(uuid, kDone, part_number);
+
+        auto update_for_done = makeUpdateForFinalType(kDone, kPartialResult,
+            part_number, passwords);
+
+        auto update_for_ready = makeUpdateForFinalType(kDone, kReady,
+            part_number, passwords);
+
         mongocxx::write_concern wc;
         wc.acknowledge_level(mongocxx::write_concern::level::k_majority);
         mongocxx::options::update opts;
         opts.write_concern(wc);
 
-        updateJobStatusInDb(uuid, &collection, filter,
-                            update, opts, false);
+        updateJobStatusInDb(uuid, collection, filter_for_done,
+            filter_for_ready, update_for_done, update_for_ready, opts, kReady);
 
     } catch (const std::exception& e) {
-        LOG_FATAL << "Failed to update task status  for " << uuid
+        LOG_ERROR << "Failed to update task status  for " << uuid
                   << ": " << e.what();
-        throw;
     }
 }
 
 void HashCrack::makeJobFail(const std::string &uuid) {
-    auto client = app().getPlugin<MongoPlugin>()->getMongoConnection();
     try {
+        auto client = app().getPlugin<MongoPlugin>()->getMongoConnection();
         auto collection = client["MD5HashCrack"]["Results"];
 
-        auto filter = make_document(kvp("uuid", uuid));
-        auto array_update = make_document(kvp("$set", make_document(
+        auto filter_for_fail = make_document(kvp("uuid", uuid));
+
+        auto filter_for_error = makeFilterForFinalType(uuid, kFailed, "");
+        auto update_for_fail = make_document(kvp("$set", make_document(
             kvp("workers_done_statuses.$[elem]", WorkerStatusType[kFailed]),
             kvp("updated_at",
                 types::b_date{std::chrono::system_clock::now()}))));
+        auto update_for_error = makeUpdateForFinalType(kFailed, kError,
+            "", builder::basic::array());
 
         mongocxx::options::update opts;
         bsoncxx::array::value array_filter =
             make_array(
-                make_document(kvp("elem", make_document(kvp("$in", make_array(WorkerStatusType[kWaiting], WorkerStatusType[kDidNotDistribute])))))
-                );
+                make_document(kvp("elem", make_document(kvp("$in", make_array(WorkerStatusType[kWaiting], WorkerStatusType[kDidNotDistribute]))))));
         opts.array_filters(array_filter.view());
         mongocxx::write_concern wc;
         wc.acknowledge_level(mongocxx::write_concern::level::k_majority);
         opts.write_concern(wc);
 
-        updateJobStatusInDb(uuid, &collection, filter, array_update, opts, true);
+        updateJobStatusInDb(uuid, collection, filter_for_fail,
+            filter_for_error, update_for_fail, update_for_error, opts, kError);
 
     } catch (const std::exception& e) {
-        LOG_FATAL << "Failed to update task status  for " << uuid
+        LOG_ERROR << "Failed to update task status  for " << uuid
                   << ": " << e.what();
-        throw;
+    }
+}
+
+document::value HashCrack::makeFilterForFinalType(
+      const std::string &uuid,
+      WorkersStatus &&worker_status,
+      const std::string &part_number) {
+    if (worker_status == kFailed) {
+        auto array_all = builder::basic::array{};
+        array_all.append(make_document(kvp("uuid", uuid)));
+        //TODO: config
+        for (int i = 0; i < 4; ++i) {
+            array_all.append(make_document(kvp("$or", make_array(
+                make_document(kvp("workers_done_statuses." + to_string(i),
+                    WorkerStatusType[kWaiting])),
+                make_document(kvp("workers_done_statuses." + to_string(i),
+                    WorkerStatusType[kDidNotDistribute]))))));
+        }
+        auto result = make_document(kvp("$and", array_all));
+        return result;
+    } else {
+        auto array_all = builder::basic::array{};
+        array_all.append(make_document(kvp("uuid", uuid)));
+        array_all.append(make_document(kvp(
+            "workers_done_statuses." + part_number,
+            WorkerStatusType[kWaiting])));
+        //TODO: config
+        for (int i = 0; i < 4; ++i) {
+            if (i == stoi(part_number)) {
+                continue;
+            }
+            array_all.append(make_document(kvp("workers_done_statuses." + to_string(i), WorkerStatusType[kDone])));
+        }
+        auto result = make_document(kvp("$and", array_all));
+        return result;
+    }
+}
+
+document::value HashCrack::makeUpdateForFinalType(
+      WorkersStatus &&worker_status,
+      StatusCode &&status_code,
+      const std::string &part_number,
+      const builder::basic::array &passwords) {
+    if (status_code == kError) {
+        auto result = make_document(kvp("$set", make_document(
+                kvp("workers_done_statuses.$[elem]", WorkerStatusType[worker_status]),
+                kvp("Result", JobStatusType[status_code]),
+                kvp("updated_at",
+                    types::b_date{std::chrono::system_clock::now()}))));
+
+        return result;
+    } else {
+        auto result = make_document(kvp("$set", make_document(
+            kvp("workers_done_statuses." + part_number,
+                WorkerStatusType[status_code]),
+            kvp("Result", JobStatusType[worker_status]),
+            kvp("$addToSet", make_document(
+                kvp("passwords",
+                    make_document(kvp("$each", passwords))))),
+                    kvp("updated_at",
+                        types::b_date{std::chrono::system_clock::now()}))));
+        return result;
     }
 }
 
 void HashCrack::updateJobStatusInDb(const std::string &uuid,
-                         mongocxx::collection* collection,
-                         const bsoncxx::document::value &filter,
-                         const bsoncxx::document::value &update,
+                         mongocxx::collection &collection,
+                         const bsoncxx::document::value &filter_one,
+                         const bsoncxx::document::value &filter_all,
+                         const bsoncxx::document::value &update_one,
+                         const bsoncxx::document::value &update_all,
                          const mongocxx::options::update &opts,
-                         bool &&set_error) {
+                         StatusCode &&status) {
     auto result =
-            collection->update_one(filter.view(), update.view(), opts);
+            collection.update_one(filter_all.view(), update_all.view(), opts);
     if (result.has_value() && result->modified_count() > 0) {
-        if (set_error) {
-            bool all_failed =
-                checkIfAllWorkersHaveType(collection, filter, kFailed);
-            if (all_failed) {
-                setStatus(collection, filter, uuid, kError);
-                return;
-            }
-        } else {
-            bool all_done =
-                checkIfAllWorkersHaveType(collection, filter, kDone);
-            if (all_done) {
-                setStatus(collection, filter, uuid, kReady);
-                return;
-            }
-        }
-        setStatus(collection, filter, uuid, kPartialResult);
-    } else {
-        LOG_INFO << "Nothing to change on job " << uuid << " status.";
+        LOG_INFO << "Changed job " << uuid << " status to "
+                 << JobStatusType[status];
+        return;
     }
-}
-//TODO: Почему-то ставится partial_result вместо ошибки если ВСЕ did not disturbed
-bool HashCrack::checkIfAllWorkersHaveType(
-      mongocxx::collection* collection,
-      const bsoncxx::document::value &filter,
-      WorkersStatus &&worker_status) {
-    auto number_of_found_docs =
-        collection->count_documents(make_document(kvp(
-            "$and", make_array(
-                filter.view(),
-                make_document(
-                    kvp("workers_done_statuses",
-                    make_document(kvp("$elemMatch", make_document(
-                        kvp("$eq", WorkerStatusType[worker_status])))))
-                )))));
-    return number_of_found_docs > 0;
+    result =
+        collection.update_one(filter_one.view(), update_one.view(), opts);
+    if (result.has_value() && result->modified_count() > 0) {
+        LOG_INFO << "Changed job " << uuid << " status to "
+                 << JobStatusType[status];
+        return;
+    }
+    LOG_INFO << "Nothing to update on job " << uuid << " status";
 }
 
-void HashCrack::setStatus(
-      mongocxx::collection* collection,
-      const bsoncxx::document::value &filter,
-      const std::string &uuid,
-      StatusCode &&job_status) {
-    mongocxx::write_concern wc;
-    wc.acknowledge_level(mongocxx::write_concern::level::k_majority);
-    mongocxx::options::update opts;
-    opts.write_concern(wc);
-
-    collection->update_one(
-                filter.view(),
-                make_document(kvp("$set", make_document(
-                    kvp("Result", JobStatusType[job_status]),
-                    kvp("updated_at",
-                        types::b_date{std::chrono::system_clock::now()})))),
-                        opts);
-    LOG_INFO << "Task " << uuid
-             << " status updated to "<< JobStatusType[job_status] << ".";
-}
 
 /*
 Логика уведомления такая: сначала мы проходим по всем воркерам,

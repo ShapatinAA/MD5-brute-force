@@ -16,10 +16,8 @@
 using bsoncxx::builder::basic::kvp;
 using bsoncxx::builder::basic::make_document;
 
-void MongoPlugin::initAndStart(const Json::Value& config)
-{
-    if (config.isMember("mongo_uri") && config["mongo_uri"].isString())
-    {
+void MongoPlugin::initAndStart(const Json::Value& config) {
+    if (config.isMember("mongo_uri") && config["mongo_uri"].isString()) {
         uri_string_ = config["mongo_uri"].asString();
         try
         {
@@ -27,31 +25,27 @@ void MongoPlugin::initAndStart(const Json::Value& config)
             mongocxx::uri uri{uri_string_};
             mongo_pool_ = std::make_unique<mongocxx::pool>(uri);
             LOG_INFO << "MongoDB plugin initialized successfully.";
-        }
-        catch (const std::exception& e)
+        } catch (const std::exception& e)
         {
             LOG_ERROR << "Failed to initialize MongoDB pool in plugin: " << e.what();
-            throw e.what();
         }
-    }
-    else
-    {
-        std::cerr << "Error: 'mongo_uri' not found or is not a string in the plugin configuration." << std::endl;
+    } else {
+        std::cerr << "Error: 'mongo_uri' not found or is not a string in the " \
+                     "plugin configuration." << std::endl;
         exit(EXIT_FAILURE);
     }
 }
 
-void MongoPlugin::shutdown()
-{
+void MongoPlugin::shutdown() {
     mongo_pool_.reset();
     mongo_instance_.reset();
     LOG_INFO << "MongoDB plugin stopped.";
 }
 
-mongocxx::pool::entry MongoPlugin::getMongoConnection()
-{
-    if (mongo_pool_)
-    {
+mongocxx::pool::entry MongoPlugin::getMongoConnection() {
+    if (mongo_pool_) {
         return mongo_pool_->acquire();
     }
+    LOG_ERROR << "Failed to get mongodb pool entry in plugin.";
+
 }
