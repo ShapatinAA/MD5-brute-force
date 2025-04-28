@@ -75,8 +75,42 @@ void HashCrack::getCrackResult(
       std::function<void(const HttpResponsePtr &)> &&callback,
       const std::string &request_id) {
     LOG_INFO << "Getting crack result for " << request_id << ".";
-    //TODO: implement logic for retrieving data from mongodb
-    callback(HttpResponse::newHttpJsonResponse(Json::Value()));
+    try {
+        auto client =
+            app().getPlugin<MongoPlugin>()->getMongoConnection();
+        auto collection = client["MD5HashCrack"]["Results"];
+        auto docs = getJobFromDb(collection, request_id);
+        if (docs.begin()->empty()) {
+            LOG_WARN << "Document not found.";
+            callback(makeFailedResponse());
+            return;
+        }
+        Json::Value result;
+        for (auto doc : docs) {
+            std::string status(doc["Result"].get_string().value);
+            result["Status"] = Json::Value(status);
+            result["Data"] = Json::Value(Json::arrayValue);
+            for (auto password : doc["passwords"].get_array().value) {
+                std::string pass(password.get_string().value);
+                result["Data"].append(pass);
+            }
+            break;
+        }
+        callback(HttpResponse::newHttpJsonResponse(result));
+    } catch (const std::exception &e) {
+        LOG_ERROR << "Error during getting crack results for user request "
+                  << request_id << ". " << e.what() << ".";
+        callback(makeFailedResponse());
+    }
+}
+
+mongocxx::cursor HashCrack::getJobFromDb(mongocxx::collection &collection,
+                                         const std::string &uuid) {
+    auto docs =
+        collection.find(make_document(kvp(
+            "uuid",
+            uuid)));
+    return docs;
 }
 
 bool HashCrack::isNotMD5(const std::string& hash) {
@@ -427,45 +461,6 @@ void HashCrack::makeJobPartWaiting(const std::string &uuid, const int &part) {
             throw std::runtime_error("Failed to set worker status " \
                 "WAITING on " + part_number + " part for " + uuid);
     }
-
-    } catch (const std::exception& e) {
-        LOG_ERROR << "Failed to update task status  for " << uuid
-                  << ": " << e.what();
-    }
-}
-
-void HashCrack::makeJobPartDone(const WorkerToManagerDTO &message) {
-    std::string uuid = message.getRequestId();
-    std::string part_number = to_string(message.getPartNumber());
-    auto passwords = builder::basic::array{};
-    for (std::string s : message.getAnswer()) {
-        passwords.append(s);
-    }
-    try {
-        auto client = app().getPlugin<MongoPlugin>()->getMongoConnection();
-        auto collection = client["MD5HashCrack"]["Results"];
-
-        auto filter_for_done = make_document(kvp("$and", make_array(
-            make_document(kvp("uuid", uuid)),
-            make_document(kvp("workers_done_statuses." + part_number,
-                              WorkerStatusType[kWaiting])))));
-
-        auto filter_for_ready =
-            makeFilterForFinalType(uuid, kDone, part_number);
-
-        auto update_for_done = makeUpdateForFinalType(kDone, kPartialResult,
-            part_number, passwords);
-
-        auto update_for_ready = makeUpdateForFinalType(kDone, kReady,
-            part_number, passwords);
-
-        mongocxx::write_concern wc;
-        wc.acknowledge_level(mongocxx::write_concern::level::k_majority);
-        mongocxx::options::update opts;
-        opts.write_concern(wc);
-
-        updateJobStatusInDb(uuid, collection, filter_for_done,
-            filter_for_ready, update_for_done, update_for_ready, opts, kReady);
 
     } catch (const std::exception& e) {
         LOG_ERROR << "Failed to update task status  for " << uuid

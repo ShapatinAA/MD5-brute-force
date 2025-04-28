@@ -40,34 +40,10 @@ public:
         std::function<void(const HttpResponsePtr &)> &&callback,
         const std::string &request_id);
 
-    void processTaskResponde(
-        const HttpRequestPtr &req,
-        std::function<void(const HttpResponsePtr &)> &&callback);
+    mongocxx::cursor getJobFromDb(mongocxx::collection &collection,
+                                  const std::string &uuid);
 
 protected:
-
-/*
- * TODO:
- *  - Заменить Json-поля во всех классах на поля с конкретными типами и именами.
- *  - Классы должны представлять чёткие объекты, без возможности двояко
- *  - интерпретировать Value::Json.
- *  - Добавить необходимые DTO для отправки пользователю.
-*/
-
-    struct Request
-    {
-        Json::Value request_body;
-        std::shared_ptr<std::vector<std::string>> live_endpoints;
-        std::mutex mtx;
-
-    };
-
-    struct CrackResult
-    {
-        Json::Value result;
-        std::unordered_map<int, WorkersStatus> workers;
-        std::mutex mtx;
-    };
 
     static bool isNotMD5(const std::string &hash);
 
@@ -133,14 +109,14 @@ protected:
         const int &part);
 
     bool publishToRabbit(
-      AMQP::TcpChannel &channel,
-      const std::string &uuid,
-      std::string message,
-      std::mutex &ack_mutex,
-      std::condition_variable &ack_cv,
-      bool &ack_received,
-      bool &nack_received,
-      const int &part);
+        AMQP::TcpChannel &channel,
+        const std::string &uuid,
+        std::string message,
+        std::mutex &ack_mutex,
+        std::condition_variable &ack_cv,
+        bool &ack_received,
+        bool &nack_received,
+        const int &part);
 
     std::string buildMessageForRabbit(
         const std::string &uuid,
@@ -151,8 +127,6 @@ protected:
     void makeJobPartWaiting(
         const std::string &uuid,
         const int &part);
-
-    void makeJobPartDone(const WorkerToManagerDTO &message);
 
     void makeJobFail(const std::string &uuid);
 
@@ -166,15 +140,15 @@ protected:
                              StatusCode &&status);
 
     bsoncxx::document::value makeFilterForFinalType(
-      const std::string &uuid,
-      WorkersStatus &&worker_status,
-      const std::string &part_number);
+        const std::string &uuid,
+        WorkersStatus &&worker_status,
+        const std::string &part_number);
 
     bsoncxx::document::value makeUpdateForFinalType(
-      WorkersStatus &&worker_status,
-      StatusCode &&status_code,
-      const std::string &part_number,
-      const bsoncxx::builder::basic::array &passwords);
+        WorkersStatus &&worker_status,
+        StatusCode &&status_code,
+        const std::string &part_number,
+        const bsoncxx::builder::basic::array &passwords);
 
     static HttpResponsePtr makeFailedResponse();
 
