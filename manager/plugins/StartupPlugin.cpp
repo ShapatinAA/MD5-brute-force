@@ -31,6 +31,7 @@ using namespace bsoncxx;
 using namespace CrackStatuses;
 using namespace CrackingAlphabet;
 using namespace std::chrono;
+using namespace drogon;
 
 using builder::basic::make_document;
 using builder::basic::kvp;
@@ -38,6 +39,16 @@ using builder::basic::make_array;
 
 
 void StartupPlugin::initAndStart(const Json::Value& config) {
+    auto custom_config = app().getCustomConfig();
+    kRabbitHost = custom_config["rabbit_host"].asString();
+    kRabbitPort = custom_config["rabbit_port"].asInt();
+    kRabbitUserName = custom_config["rabbit_user"].asString();
+    kRabbitPassword = custom_config["rabbit_password"].asString();
+    kUpdateTime = config["update_time"].asDouble();
+    kResultQueueName = custom_config["results_queue_name"].asString();
+    kTasksQueueName = custom_config["tasks_queue_name"].asString();
+    kTimeout = custom_config["timeout"].asDouble();
+    kWorkersCount = custom_config["number_of_workers"].asInt();
     LOG_INFO << "Startup plugin initialized successfully.";
 }
 void StartupPlugin::shutdown() {
@@ -46,10 +57,10 @@ void StartupPlugin::shutdown() {
 
 void StartupPlugin::resumeWork() {
     try {
-        auto client = drogon::app().getPlugin<MongoPlugin>()->getMongoConnection();
+        auto client =
+            drogon::app().getPlugin<MongoPlugin>()->getMongoConnection();
         auto collection = client["MD5HashCrack"]["Results"];
         retrieveReadyResults(collection);
-        LOG_INFO << "1";
         auto docs = getWaitingAndUndistributedJobParts(collection);
         for (auto doc : docs) {
             dealWithDoc(collection, doc);
@@ -57,7 +68,7 @@ void StartupPlugin::resumeWork() {
     } catch (mongocxx::query_exception e) {
         LOG_ERROR << "Exception occured while querying: " << e.what();
     }
-    drogon::app().getLoop()->runEvery(30.0, []() {
+    drogon::app().getLoop()->runAfter(kUpdateTime, []() {
         drogon::app().getPlugin<StartupPlugin>()->resumeWork();
     });
 }
@@ -65,16 +76,12 @@ void StartupPlugin::resumeWork() {
 void StartupPlugin::retrieveReadyResults(mongocxx::collection &collection) {
     LOG_INFO << "Running periodic results queue check...";
     try {
-        // auto io_context_ptr = std::make_shared<boost::asio::io_context>();
-        // auto handler_ptr = std::make_shared<AMQP::LibBoostAsioHandler>(*io_context_ptr);
-        // //TODO: config
-        // auto connection_ptr = std::make_shared<AMQP::TcpConnection>(handler_ptr.get(), AMQP::Address("rabbitmq", 5672, AMQP::Login("guest", "guest"), "/"));
-        // auto channel_ptr = std::make_shared<AMQP::TcpChannel>(connection_ptr.get());
-
         boost::asio::io_context io_context_ptr;
         AMQP::LibBoostAsioHandler handler_ptr(io_context_ptr);
-        //TODO: config
-        AMQP::TcpConnection connection_ptr(&handler_ptr, AMQP::Address("rabbitmq", 5672, AMQP::Login("guest", "guest"), "/"));
+        AMQP::TcpConnection connection_ptr(&handler_ptr,
+            AMQP::Address(kRabbitHost, kRabbitPort,
+                AMQP::Login(kRabbitUserName, kRabbitPassword),
+            "/"));
         AMQP::TcpChannel channel_ptr(&connection_ptr);
 
         if (!declareQueueForRead(channel_ptr)) {
@@ -107,13 +114,14 @@ bool StartupPlugin::declareQueueForRead(
     AMQP::TcpChannel &channel_ptr) {
     try {
         LOG_INFO << "Trying to declare queue.";
-        //TODO: config
-        channel_ptr.declareQueue("resultsQueue", AMQP::durable)
-            .onSuccess([&](const std::string& name, uint32_t msgcount, uint32_t consumercount) {
-                LOG_INFO << "Results queue '" << name << "' checked/declared ok.";
+        channel_ptr.declareQueue(kResultQueueName, AMQP::durable)
+            .onSuccess([&](const std::string& name, uint32_t, uint32_t) {
+                LOG_INFO << "Results queue '" << name
+                         << "' checked/declared ok.";
             })
             .onError([&](const char* message) {
-                LOG_ERROR << "Failed to declare results queue '" << "resultsQueue" << "': " << message;
+                LOG_ERROR << "Failed to declare results queue '"
+                          << kResultQueueName << "': " << message;
             });
     } catch (const std::exception &e) {
         LOG_ERROR << "Error during declaring amqp channel.";
@@ -137,8 +145,9 @@ void StartupPlugin::readAndProcessResultQueue(
         queue_reported_empty = false;
         got_error = false;
         consumed = false;
-        //TODO: config
-        if (!getAndProcessMessageFromQueue(collection, channel_ptr, queue_empty_mutex, queue_empty_cv, queue_reported_empty, got_error, consumed)) {
+        if (!getAndProcessMessageFromQueue(
+            collection, channel_ptr, queue_empty_mutex, queue_empty_cv,
+            queue_reported_empty, got_error, consumed)) {
             LOG_ERROR << "Error reading and processing result queue.";
             return;
         }
@@ -166,12 +175,13 @@ bool StartupPlugin::getAndProcessMessageFromQueue(
       bool &queue_reported_empty,
       bool &got_error,
       bool &consumed) {
-    //TODO: config
     try {
-        channel_ptr.get("resultsQueue")
-            .onReceived([&](const AMQP::Message& message, uint64_t deliveryTag, bool redelivered) {
+        channel_ptr.get(kResultQueueName)
+            .onReceived([&](const AMQP::Message& message,
+                               uint64_t deliveryTag, bool) {
                 LOG_INFO << "Fetched message tag " << deliveryTag;
-                processMessageFromQueue(message, channel_ptr, deliveryTag, collection);
+                processMessageFromQueue(message, channel_ptr,
+                                        deliveryTag, collection);
                 LOG_INFO << "Processed message from " << "resultsQueue"
                          << ". deliveryTag: " << deliveryTag;
                 std::lock_guard lock(queue_empty_mutex);
@@ -179,8 +189,7 @@ bool StartupPlugin::getAndProcessMessageFromQueue(
                 queue_empty_cv.notify_one();
             })
             .onEmpty([&]() {
-                //TODO: config
-                LOG_INFO << "Queue '" << "resultsQueue" << "' reported empty.";
+                LOG_INFO << "Queue " << kResultQueueName << " reported empty.";
                 std::lock_guard lock(queue_empty_mutex);
                 queue_reported_empty = true;
                 queue_empty_cv.notify_one();
@@ -207,7 +216,8 @@ void StartupPlugin::processMessageFromQueue(
     Json::Value root;
     Json::Reader reader;
     if (!reader.parse(body, root)) {
-        throw std::runtime_error("Failed to parse result JSON: " + reader.getFormattedErrorMessages());
+        throw std::runtime_error("Failed to parse result JSON: "
+            + reader.getFormattedErrorMessages());
     }
     validateRetrieveMessage(root);
     WorkerToManagerDTO result(root);
@@ -232,10 +242,10 @@ void StartupPlugin::processMessageFromQueue(
 
 void StartupPlugin::validateRetrieveMessage(const Json::Value &root) {
     // Basic validation
-    if (!root.isMember("uuid") || !root["uuid"].isString() ||
-        !root.isMember("part_number") || !root["part_number"].isInt() ||
-        !root.isMember("answer") || !root["answer"].isArray()) {
-        throw std::runtime_error("Missing/invalid fields (uuid, part_number, answer)");
+    if (!root.isMember("RequestId") || !root["RequestId"].isString() ||
+        !root.isMember("PartNumber") || !root["PartNumber"].isInt() ||
+        !root.isMember("Answer") || !root["Answer"].isArray()) {
+        throw std::runtime_error("Missing/invalid fields");
     }
 }
 
@@ -253,7 +263,8 @@ void StartupPlugin::makeJobPartDone(mongocxx::collection &collection,
             make_document(kvp("workers_done_statuses." + part_number,
                               WorkerStatusType[kWaiting])))));
 
-        auto filter_for_ready = makeFilterForFinalType(uuid, kDone, part_number);
+        auto filter_for_ready =
+            makeFilterForFinalType(uuid, kDone, part_number);
 
         auto update_for_done = makeUpdateForFinalType(kDone, kPartialResult,
             part_number, passwords);
@@ -278,7 +289,6 @@ void StartupPlugin::makeJobPartDone(mongocxx::collection &collection,
 
 mongocxx::cursor StartupPlugin::getWaitingAndUndistributedJobParts(
       mongocxx::collection &collection) {
-    LOG_INFO << "2";
     auto docs =
         collection.find(make_document(kvp(
             "workers_done_statuses",
@@ -290,13 +300,11 @@ mongocxx::cursor StartupPlugin::getWaitingAndUndistributedJobParts(
 
 void StartupPlugin::dealWithDoc(mongocxx::collection &collection,
                                 const bsoncxx::document::view &doc) {
-    LOG_INFO << "3";
     std::string uuid (doc["uuid"].get_string().value);
     auto ts = doc["created_at"].get_date().value;
     system_clock::time_point created{ milliseconds{ts} };
     auto diff = system_clock::now() - created;
-    //TODO: config
-    if (duration_cast<seconds>(diff).count() >= 60) {
+    if (duration_cast<seconds>(diff).count() >= kTimeout) {
         makeJobFail(collection, uuid);
         return;
     }
@@ -305,7 +313,6 @@ void StartupPlugin::dealWithDoc(mongocxx::collection &collection,
 
 void StartupPlugin::makeJobFail(mongocxx::collection &collection,
                                 const std::string &uuid) {
-    LOG_INFO << "4";
     try {
         auto filter_for_fail = make_document(kvp("uuid", uuid));
 
@@ -319,8 +326,10 @@ void StartupPlugin::makeJobFail(mongocxx::collection &collection,
 
         mongocxx::options::update opts;
         bsoncxx::array::value array_filter =
-            make_array(
-                make_document(kvp("elem", make_document(kvp("$in", make_array(WorkerStatusType[kWaiting], WorkerStatusType[kDidNotDistribute]))))));
+            make_array(make_document(kvp("elem",
+                make_document(kvp("$in",
+                    make_array(WorkerStatusType[kWaiting],
+                        WorkerStatusType[kDidNotDistribute]))))));
         opts.array_filters(array_filter.view());
         mongocxx::write_concern wc;
         wc.acknowledge_level(mongocxx::write_concern::level::k_majority);
@@ -344,8 +353,7 @@ document::value StartupPlugin::makeFilterForFinalType(
     if (worker_status == kFailed) {
         auto array_all = builder::basic::array{};
         array_all.append(make_document(kvp("uuid", uuid)));
-        //TODO: config
-        for (int i = 0; i < 4; ++i) {
+        for (int i = 0; i < kWorkersCount; ++i) {
             array_all.append(make_document(kvp("$or", make_array(
                 make_document(kvp("workers_done_statuses." + to_string(i),
                     WorkerStatusType[kWaiting])),
@@ -360,12 +368,12 @@ document::value StartupPlugin::makeFilterForFinalType(
         array_all.append(make_document(kvp(
             "workers_done_statuses." + part_number,
             WorkerStatusType[kWaiting])));
-        //TODO: config
-        for (int i = 0; i < 4; ++i) {
+        for (int i = 0; i < kWorkersCount; ++i) {
             if (i == stoi(part_number)) {
                 continue;
             }
-            array_all.append(make_document(kvp("workers_done_statuses." + to_string(i), WorkerStatusType[kDone])));
+            array_all.append(make_document(kvp("workers_done_statuses."
+                + to_string(i), WorkerStatusType[kDone])));
         }
         auto result = make_document(kvp("$and", array_all));
         return result;
@@ -379,22 +387,23 @@ document::value StartupPlugin::makeUpdateForFinalType(
       const builder::basic::array &passwords) {
     if (status_code == kError) {
         auto result = make_document(kvp("$set", make_document(
-                kvp("workers_done_statuses.$[elem]", WorkerStatusType[worker_status]),
+                kvp("workers_done_statuses.$[elem]",
+                    WorkerStatusType[worker_status]),
                 kvp("Result", JobStatusType[status_code]),
-                kvp("updated_at",
-                    types::b_date{std::chrono::system_clock::now()}))));
+                kvp("updated_at", types::b_date{system_clock::now()}))));
 
         return result;
     } else {
-        auto result = make_document(kvp("$set", make_document(
-            kvp("workers_done_statuses." + part_number,
-                WorkerStatusType[status_code]),
-            kvp("Result", JobStatusType[worker_status]),
+        auto result = make_document(
+            kvp("$set", make_document(
+                kvp("workers_done_statuses." + part_number,
+                    WorkerStatusType[worker_status]),
+                kvp("Result", JobStatusType[status_code]),
+                kvp("updated_at",
+                    types::b_date{system_clock::now()}))),
             kvp("$addToSet", make_document(
                 kvp("passwords",
-                    make_document(kvp("$each", passwords))))),
-                    kvp("updated_at",
-                        types::b_date{std::chrono::system_clock::now()}))));
+                    make_document(kvp("$each", passwords))))));
         return result;
     }
 }
@@ -428,18 +437,13 @@ void StartupPlugin::updateJobStatusInDb(
 void StartupPlugin::sendTaskToWorkers(const std::string& uuid,
                                       const bsoncxx::document::view &doc,
                                       mongocxx::collection &collection) {
-    LOG_INFO << "5";
     try {
-        // auto io_context_ptr = std::make_shared<boost::asio::io_context>();
-        // auto handler_ptr = std::make_shared<AMQP::LibBoostAsioHandler>(*(io_context_ptr.get()));
-        // //TODO: config
-        // auto connection_ptr = std::make_shared<AMQP::TcpConnection>(handler_ptr.get(), AMQP::Address("rabbitmq", 5672, AMQP::Login("guest", "guest"), "/"));
-        // auto channel_ptr = std::make_shared<AMQP::TcpChannel>(connection_ptr.get());
-
         boost::asio::io_context io_context_ptr;
         AMQP::LibBoostAsioHandler handler_ptr(io_context_ptr);
-        //TODO: config
-        AMQP::TcpConnection connection_ptr(&handler_ptr, AMQP::Address("rabbitmq", 5672, AMQP::Login("guest", "guest"), "/"));
+        AMQP::TcpConnection connection_ptr(&handler_ptr,
+            AMQP::Address(kRabbitHost, kRabbitPort,
+                AMQP::Login(kRabbitUserName, kRabbitPassword),
+            "/"));
         AMQP::TcpChannel channel_ptr(&connection_ptr);
 
         std::mutex ack_mutex;
@@ -462,18 +466,13 @@ void StartupPlugin::sendTaskToWorkers(const std::string& uuid,
             LOG_INFO << "Boost.Asio thread finished.";
         });
 
-        LOG_INFO << "5.5";
-        sleep(1);
-        LOG_INFO << "5.9";
         distributeTask(channel_ptr, collection, uuid, doc, ack_mutex, ack_cv,
                        ack_received, nack_received);
 
-        LOG_INFO << "10";
 
         if (connection_ptr.usable()) {
             connection_ptr.close();
         }
-        LOG_INFO << "11";
         io_context_ptr.stop(); // Stop the event loop
         if (io_thread.joinable()) {
             io_thread.join();
@@ -497,14 +496,14 @@ bool StartupPlugin::prepareAmqpChannel(
             .onSuccess([&]() {
                 LOG_INFO << "Publisher confirms enabled for task " << uuid;
             })
-            .onAck([&](uint64_t deliveryTag, bool multiple) {
+            .onAck([&](uint64_t deliveryTag, bool) {
                 LOG_INFO << "Got delivery from Rabbit on tag " << deliveryTag
                          << " for request " << uuid;
                 std::lock_guard lock(ack_mutex);
                 ack_received = true;
                 ack_cv.notify_one();
             })
-            .onNack([&](uint64_t deliveryTag, bool multiple, bool requeue) {
+            .onNack([&](uint64_t deliveryTag, bool, bool) {
                 LOG_WARN << "Didn't get delivery from Rabbit on tag " << deliveryTag
                          << " for request " << uuid;
                 std::lock_guard lock(ack_mutex);
@@ -529,9 +528,7 @@ bool StartupPlugin::declareQueueForChannel(
       AMQP::TcpChannel &channel_ptr,
       const std::string &uuid) {
     try {
-        // std::string rabbit_queue_name = kConfig["rabbitQueueName"].asString();
-        std::string rabbit_queue_name = "tasksQueue";
-        channel_ptr.declareQueue(rabbit_queue_name, AMQP::durable)
+        channel_ptr.declareQueue(kTasksQueueName, AMQP::durable)
             .onSuccess([](const std::string &name,
                              uint32_t messageCount,
                              uint32_t consumerCount) {
@@ -540,7 +537,7 @@ bool StartupPlugin::declareQueueForChannel(
                          << consumerCount << " consumers";
             })
             .onError([&](const char* message) {
-                 LOG_ERROR << "Error declaring queue '" << rabbit_queue_name
+                 LOG_ERROR << "Error declaring queue '" << kTasksQueueName
                            << "' for task " << uuid << ": " << message;
             });
     } catch (const std::exception &e) {
@@ -559,16 +556,12 @@ void StartupPlugin::distributeTask(
       std::condition_variable &ack_cv,
       bool &ack_received,
       bool &nack_received) {
-    LOG_INFO << "6";
 
     auto statuses = doc["workers_done_statuses"].get_array().value;
-    LOG_INFO << "7";
     int length = std::distance(statuses.begin(), statuses.end());
     for (int part = 0; part < length; ++part) {
-        LOG_INFO << "8";
         if (statuses[part].get_string().value
             == WorkerStatusType[kDidNotDistribute]) {
-            LOG_INFO << "9";
 
             std::string message =
                 buildMessageForRabbit(uuid, doc, part, statuses.length());
@@ -581,11 +574,11 @@ void StartupPlugin::distributeTask(
                 trySendingPart(channel_ptr, uuid, message, ack_mutex, ack_cv,
                                ack_received, nack_received, part);
             if (part_sent) {
-                LOG_INFO << "Successful sent part " << part << " for task " << uuid
-                         << " to RabbitMQ";
+                LOG_INFO << "Successful sent part " << part << " for task "
+                         << uuid << " to RabbitMQ";
                 makeJobPartWaiting(collection, uuid, part);
-                LOG_INFO << "Successful sent part " << part << " for task " << uuid
-                         << " to MongoDB";
+                LOG_INFO << "Successful sent part " << part << " for task "
+                         << uuid << " to MongoDB";
             } else {
                 LOG_WARN << "Failed to send part " << part << " for task " << uuid;
             }
@@ -622,13 +615,12 @@ bool StartupPlugin::trySendingPart(
       bool &ack_received,
       bool &nack_received,
       const int &part) {
-    LOG_INFO << "9";
     ack_received = false; // Reset before publish
     nack_received = false;
     try {
-        bool send_status = publishToRabbit(channel_ptr, uuid, message, ack_mutex,
-                                           ack_cv, ack_received, nack_received,
-                                           part);
+        bool send_status = publishToRabbit(channel_ptr, uuid, message,
+                                           ack_mutex, ack_cv, ack_received,
+                                           nack_received, part);
         return send_status;
     } catch (const AMQP::Exception& e) {
         LOG_ERROR << "RabbitMQ publish exception for task " << uuid
@@ -650,23 +642,17 @@ bool StartupPlugin::publishToRabbit(
       bool &ack_received,
       bool &nack_received,
       const int &part) {
-    LOG_INFO << "10";
-    // std::string rabbitmq_queue_name =
-    //     kConfig["rabbitQueueName"].asString();
-    std::string rabbitmq_queue_name = "tasksQueue";
     AMQP::Envelope envelope(message);
     envelope.setDeliveryMode(2);
-    channel_ptr.publish("", rabbitmq_queue_name, envelope);
+    envelope.setExpiration("x-message-ttl = " +
+        to_string(static_cast<int>(kTimeout * 1000)));
+    channel_ptr.publish("", kTasksQueueName, envelope);
     LOG_INFO << "Published part " << part << " for task " << uuid;
 
     std::unique_lock lock(ack_mutex);
-    // auto wait_duration =
-    //     std::chrono::duration_cast<std::chrono::seconds>(
-    //     std::chrono::seconds(kConfig["timeout"].asInt())) /
-    //     (kNumberOfWorkers * total_parts_count);
     auto wait_duration =
-        std::chrono::duration_cast<std::chrono::seconds>(
-        std::chrono::seconds(1));
+        std::chrono::duration_cast<seconds>(
+        seconds(1));
 
     if (ack_cv.wait_for(lock, wait_duration, [&] {
             return ack_received || nack_received;
@@ -700,7 +686,7 @@ void StartupPlugin::makeJobPartWaiting(mongocxx::collection &collection,
             kvp("workers_done_statuses." + part_number,
                 WorkerStatusType[kWaiting]),
             kvp("updated_at",
-                types::b_date{std::chrono::system_clock::now()}))));
+                types::b_date{system_clock::now()}))));
         mongocxx::options::update opts;
         mongocxx::write_concern wc;
         wc.acknowledge_level(mongocxx::write_concern::level::k_majority);

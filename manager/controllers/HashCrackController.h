@@ -29,9 +29,6 @@ public:
     ADD_METHOD_TO(HashCrack::getCrackResult,
                   "/api/hash/status?request_id={uuid}",
                   Get);
-    ADD_METHOD_TO(HashCrack::processTaskResponde,
-                  "/internal/api/manager/hash/crack/request",
-                  Patch);
     METHOD_LIST_END
 
     void crackInitialize(
@@ -179,74 +176,7 @@ protected:
       const std::string &part_number,
       const bsoncxx::builder::basic::array &passwords);
 
-
-
-
-
-
-
-
-
-
-    Json::Value addToStorageRequests(
-        const std::string &uuid,
-        const std::shared_ptr<Json::Value> &req_body_json_ptr);
-
-    bool checkIfTimeout(
-        std::shared_ptr<CrackResult> &crack_result,
-        const WorkerToManagerDTO &response);
-
-    std::vector<std::string> readEndpointsFromFile();
-
     static HttpResponsePtr makeFailedResponse();
 
-    static HttpResponsePtr makeSuccessResponse(Json::Value &&uuid);
-
     static std::string getRandomString(size_t n);
-
-    void notifyWorkersOnTask(std::string &&uuid);
-
-    void setProgressValue(
-        std::shared_ptr<CrackResult> &crack_result,
-        const std::string& request_id);
-
-    void sendTaskPartToWorker(
-        std::string uuid, int part_count, int part_number,
-        const std::shared_ptr<Request> &request,
-        std::shared_ptr<std::vector<std::string>> &live_endpoints);
-
-    void processWorkersRespond(const std::string &uuid,
-                               const int &part_number);
-
-    void countIterations(
-        std::shared_ptr<CrackResult> &crack_result,
-        const std::string &request_id,
-        const std::string &live_endpoint,
-        const int &part_number,
-        const int &part_count,
-        const size_t &max_iterations,
-        size_t &sum_iterations);
-
-    std::shared_ptr<Json::Value> getIterationsFromWorker(
-        const std::string &live_endpoint,
-        const std::string &request_id,
-        const int &part_number);
-
-    std::unordered_map<std::string, std::shared_ptr<CrackResult>>
-        crack_result_store_;
-    std::unordered_map<std::string, std::shared_ptr<Request>>
-        request_store_;
-    // const int kMaxRequestStoreSize =
-    //     std::stoi(std::getenv("MAX_QUEUE_SIZE"));
-    const int kMaxRequestStoreSize = 10;
-    // const int kMongoMaxRetries =
-    //     std::stoi(std::getenv("MONGO_MAX_RETRIES"));
-    const int kMongoMaxRetries = 3;
-    // const int kNumberOfWorkers =
-    //     std::stoi(std::getenv("NUMBER_OF_WORKERS"));
-    const int kNumberOfWorkers = 4;
-    const Json::Value kConfig = app().getCustomConfig();
-    const Json::Value timeout = app().getCustomConfig()["timeout"];
-    std::mutex request_store_mtx_;
-    std::mutex crack_result_store_mtx_;
 };

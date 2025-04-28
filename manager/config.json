@@ -5,17 +5,29 @@
       "port": 8848
     }
   ],
-  "threads_num": 0,
-  "numberOfWorkers": 4,
-  "rabbitQueueName": "tasksQueue",
-  "rabbitMaxRetries": 3,
-  "timeout": 60,
   "plugins": [
     {
       "name": "MongoPlugin",
       "config": {
         "mongo_uri": "mongodb://mongodb1:27017,mongodb2:27017,mongodb3:27017/?replicaSet=rs0"
       }
+    },
+    {
+      "name": "StartupPlugin",
+      "config": {
+        "update_time": 10
+      }
     }
-  ]
+  ],
+  "custom_config": {
+    "threads_num": 0,
+    "number_of_workers": 4,
+    "timeout": 60,
+    "rabbit_host": "rabbitmq",
+    "rabbit_port": 5672,
+    "rabbit_user": "guest",
+    "rabbit_password": "guest",
+    "results_queue_name": "resultsQueue",
+    "tasks_queue_name": "tasksQueue"
+  }
 }

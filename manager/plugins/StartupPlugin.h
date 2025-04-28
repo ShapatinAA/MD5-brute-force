@@ -146,4 +146,15 @@ class StartupPlugin : public drogon::Plugin<StartupPlugin> {
                             const std::string &uuid,
                             const int &part);
 
+  private:
+    std::string kRabbitHost;
+    int kRabbitPort;
+    std::string kRabbitUserName;
+    std::string kRabbitPassword;
+    double kUpdateTime;
+    std::string kResultQueueName;
+    std::string kTasksQueueName;
+    double kTimeout;
+    int kWorkersCount;
+
 };
