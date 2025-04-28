@@ -19,24 +19,52 @@ RUN apt-get update && \
     libjsoncpp-dev \
     mesa-common-dev \
     ninja-build \
-    webkit2gtk-4.0
+    webkit2gtk-4.0 \
+    libboost-all-dev \
+    gnupg \
+    gdb \
+    pkg-config \
+    libssl-dev \
+    libsasl2-dev \
+    libzstd-dev \
+    libz-dev \
+    libsnappy-dev \
+    liblz4-dev \
+    cmake \
+    libmongoc-1.0 \
+    build-essential  \
+    libboost-system-dev  \
+    zlib1g-dev  \
+    git \
+    librabbitmq-dev  \
+    libboost-dev
+
+RUN git clone https://github.com/CopernicaMarketingSoftware/AMQP-CPP.git && \
+    cd AMQP-CPP && mkdir build && cd build && \
+    cmake .. -DAMQP-CPP_BUILD_SHARED=ON -DAMQP-CPP_LINUX_TCP=ON -DCMAKE_BUILD_TYPE=Debug  && \
+    sudo cmake --build . --target install
 
 RUN ln -s /usr/include/jsoncpp/json/ /usr/include/json
 
-WORKDIR /app
-
-RUN drogon_ctl create project worker
+# Update linker cache and set library path
+RUN sudo echo "/usr/local/lib" > /etc/ld.so.conf.d/local.conf && \
+    sudo ldconfig && \
+    sudo echo "LD_LIBRARY_PATH=/usr/local/lib" >> /etc/environment
 
 WORKDIR /app/worker
 
-RUN cp CMakeLists.txt ..
-
-COPY . /app/worker
-
-RUN cp -f ../CMakeLists.txt ./
-
-RUN cd build && cmake .. -D CMAKE_BUILD_TYPE=Release && make -j4
-
-RUN ls ./build/
-
-CMD ["./build/worker"]
+#RUN drogon_ctl create project worker
+#
+#WORKDIR /app/worker
+#
+#RUN cp CMakeLists.txt ..
+#
+#COPY . /app/worker
+#
+#RUN cp -f ../CMakeLists.txt ./
+#
+#RUN cd build && cmake .. -D CMAKE_BUILD_TYPE=Release && make -j4
+#
+#RUN ls ./build/
+#
+#CMD ["./build/worker"]

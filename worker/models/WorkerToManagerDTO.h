@@ -37,6 +37,7 @@ public:
         Json::Value json;
         json["RequestId"] = request_id;
         json["PartNumber"] = part_number;
+        json["Answer"] = Json::Value(Json::arrayValue);
         for (auto word : answer) {
             json["Answer"].append(word);
         }

@@ -20,14 +20,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "" FORCE)
-set(CMAKE_CXX_FLAGS_DEBUG "/Zi /Od /DDEBUG")
+#set(CMAKE_CXX_FLAGS_DEBUG "/Zi /Od /DDEBUG")
 
 
-add_executable(${PROJECT_NAME} main.cc
-        controllers/WorkerController.cpp
-        controllers/WorkerController.h
-        models/ManagerToWorkerDTO.h
-        models/WorkerToManagerDTO.h)
+add_executable(${PROJECT_NAME} main.cc)
 
 # ##############################################################################
 # If you include the drogon source code locally in your project, use this method
@@ -39,7 +35,8 @@ add_executable(${PROJECT_NAME} main.cc
 #set(CMAKE_TOOLCHAIN_FILE "C:/vcpkg/scripts/buildsystems/vcpkg.cmake")
 #set(CMAKE_PREFIX_PATH "C:/vcpkg/installed/x64-windows/share/drogon" ${CMAKE_PREFIX_PATH})
 find_package(Drogon CONFIG REQUIRED)
-target_link_libraries(${PROJECT_NAME} debug Drogon::Drogon)
+find_package(amqpcpp CONFIG REQUIRED)
+target_link_libraries(${PROJECT_NAME} debug amqpcpp Drogon::Drogon)
 
 # ##############################################################################
 
