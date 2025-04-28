@@ -644,8 +644,7 @@ bool StartupPlugin::publishToRabbit(
       const int &part) {
     AMQP::Envelope envelope(message);
     envelope.setDeliveryMode(2);
-    envelope.setExpiration("x-message-ttl = " +
-        to_string(static_cast<int>(kTimeout * 1000)));
+    envelope.setExpiration(to_string(static_cast<int>(kTimeout) * 1000));
     channel_ptr.publish("", kTasksQueueName, envelope);
     LOG_INFO << "Published part " << part << " for task " << uuid;
 

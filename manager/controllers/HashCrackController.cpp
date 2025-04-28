@@ -372,6 +372,8 @@ bool HashCrack::publishToRabbit(
             app().getCustomConfig()["tasks_queue_name"].asString();
     AMQP::Envelope envelope(message);
     envelope.setDeliveryMode(2);
+    int ttl = app().getCustomConfig()["timeout"].asInt();
+    envelope.setExpiration(to_string( ttl * 1000));
     channel.publish("", queue_name, envelope);
     LOG_INFO << "Published part " << part << " for task " << uuid;
 
