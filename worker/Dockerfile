@@ -54,17 +54,11 @@ RUN sudo echo "/usr/local/lib" > /etc/ld.so.conf.d/local.conf && \
 WORKDIR /app/worker
 
 #RUN drogon_ctl create project worker
-#
-#WORKDIR /app/worker
-#
-#RUN cp CMakeLists.txt ..
-#
-#COPY . /app/worker
-#
-#RUN cp -f ../CMakeLists.txt ./
-#
-#RUN cd build && cmake .. -D CMAKE_BUILD_TYPE=Release && make -j4
-#
-#RUN ls ./build/
-#
-#CMD ["./build/worker"]
+
+WORKDIR /app/worker
+
+COPY . /app/worker
+
+RUN cd build && cmake -DCMAKE_BUILD_TYPE=Release -S /app/worker -B /app/worker/build
+
+CMD ["/app/worker/build/Worker"]

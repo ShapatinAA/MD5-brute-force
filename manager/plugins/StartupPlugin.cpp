@@ -651,7 +651,7 @@ bool StartupPlugin::publishToRabbit(
     std::unique_lock lock(ack_mutex);
     auto wait_duration =
         std::chrono::duration_cast<seconds>(
-        seconds(1));
+        seconds(5));
 
     if (ack_cv.wait_for(lock, wait_duration, [&] {
             return ack_received || nack_received;

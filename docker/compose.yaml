@@ -8,47 +8,63 @@ services:
       context: ../worker
       dockerfile: ./Dockerfile
     image: worker1
-    env_file: "./work.env"
     networks:
       - my-bridge
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mongo-init:
+        condition: service_completed_successfully
 
   worker2:
     build:
       context: ../worker
       dockerfile: ./Dockerfile
     image: worker1
-    env_file: "./work.env"
     networks:
       - my-bridge
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mongo-init:
+        condition: service_completed_successfully
 
   worker3:
     build:
       context: ../worker
       dockerfile: ./Dockerfile
     image: worker1
-    env_file: "./work.env"
     networks:
       - my-bridge
-
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mongo-init:
+        condition: service_completed_successfully
 
   manager:
     build:
       context: ../manager
       dockerfile: ./Dockerfile
     image: manager
-    env_file: 
-     - "./manag.env"
     ports:
       - "${MANAGER_PORTS}"
     networks:
       - my-bridge
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mongo-init:
+        condition: service_completed_successfully
 
   rabbitmq:
     image: rabbitmq:management
     env_file:
       - "./rabbitmq.env"
     volumes:
-      - rabbitmq:/tmp/rabbitmq
+      - ./rabbitmq:/tmp/rabbitmq
+    healthcheck:
+      test: [ "CMD-SHELL", "rabbitmq-diagnostics -q check_port_connectivity && rabbitmq-diagnostics -q cluster_status && rabbitmq-diagnostics -q check_local_alarms" ]
     ports:
       - 5672:5672
       - 15672:15672
@@ -62,6 +78,11 @@ services:
     volumes:
       - ./data1:/data/db
       - ./mongodb_config:/data/configdb
+    healthcheck:
+      test: [ "CMD-SHELL", "echo 'db.runCommand({serverStatus:1}).ok' | mongosh MD5HashCrack --quiet | grep 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     ports:
       - 27017:27017
     entrypoint: [ "/usr/bin/mongod", "--config", "/data/configdb/mongod.conf"]
@@ -73,6 +94,11 @@ services:
     volumes:
       - ./data2:/data/db
       - ./mongodb_config:/data/configdb
+    healthcheck:
+      test: [ "CMD-SHELL", "echo 'db.runCommand({serverStatus:1}).ok' | mongosh MD5HashCrack --quiet | grep 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     ports:
       - 27018:27017
     entrypoint: [ "/usr/bin/mongod", "--config", "/data/configdb/mongod.conf"]
@@ -84,22 +110,29 @@ services:
     volumes:
       - ./data3:/data/db
       - ./mongodb_config:/data/configdb
+    healthcheck:
+      test: [ "CMD-SHELL", "echo 'db.runCommand({serverStatus:1}).ok' | mongosh MD5HashCrack --quiet | grep 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     ports:
       - 27019:27017
     entrypoint: [ "/usr/bin/mongod", "--config", "/data/configdb/mongod.conf"]
 
-  mongoclient:
+  mongo-init:
     image: mongo
     networks:
       - my-bridge
     depends_on:
-      - mongodb1
-      - mongodb2
-      - mongodb3
+      mongodb1:
+        condition: service_healthy
+      mongodb2:
+        condition: service_healthy
+      mongodb3:
+        condition: service_healthy
     volumes:
-      - ./deployment_scripts:/deployment_scripts
-    entrypoint:
-      - /deployment_scripts/initiate_replica.sh
+      - ./deployment_scripts/initiate_replica.sh:/deployment_scripts/initiate_replica.sh:ro
+    entrypoint: ["bash", "/deployment_scripts/initiate_replica.sh"]
 
   mongo-express:
     image: mongo-express
@@ -108,9 +141,8 @@ services:
     environment:
     - ME_CONFIG_MONGODB_URL=mongodb://mongodb1:27017,mongodb2:27017,mongodb3:27017/?replicaSet=rs0
     depends_on:
-      - mongodb1
-      - mongodb2
-      - mongodb3
+      mongo-init:
+        condition: service_completed_successfully
     networks:
       - my-bridge
 
@@ -118,5 +150,5 @@ volumes:
   data1:
   data2:
   data3:
-  config1:
+  mongodb_config:
   rabbitmq:

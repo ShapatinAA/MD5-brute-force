@@ -1,5 +1,4 @@
 #!/bin/bash
-
 echo "Starting replica set initialize"
 until mongosh --host mongodb1 --eval "print(\"waited for connection\")"
 do

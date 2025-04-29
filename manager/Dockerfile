@@ -70,23 +70,21 @@ RUN sudo echo "/usr/local/lib" > /etc/ld.so.conf.d/local.conf && \
     sudo ldconfig && \
     sudo echo "LD_LIBRARY_PATH=/usr/local/lib" >> /etc/environment
 
-ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
-
 WORKDIR /app/ParallelSystems
 #
 #RUN drogon_ctl create project ParallelSystems
 #
-#WORKDIR /app/ParallelSystems
-#
-#COPY . /app/ParallelSystems
-#
-#RUN cd build && cmake /app/ParallelSystems -DCMAKE_VERBOSE_MAKEFILE=ON && make
+WORKDIR /app/ParallelSystems
+
+COPY . /app/ParallelSystems
+
+RUN cd build && cmake -DCMAKE_BUILD_TYPE=Release -S /app/ParallelSystems -B /app/ParallelSystems/build
 #
 #RUN ls /usr/local/lib
 #
-#CMD ["/app/ParallelSystems/build/ParallelSystems"]
+CMD ["/app/ParallelSystems/build/ParallelSystems"]
 
 EXPOSE 8848:8848
 
-EXPOSE 1234:1234
+#EXPOSE 1234:1234
 

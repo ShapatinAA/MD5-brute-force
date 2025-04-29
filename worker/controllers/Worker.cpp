@@ -394,7 +394,7 @@ bool Worker::publishResultAndWaitForConfirm(const std::string& result_body) {
     }
     LOG_INFO << "Worker thread: Waiting for publish confirmation callback...";
     std::unique_lock lock(publish_confirm_mutex_);
-    if (publish_confirm_cv_.wait_for(lock, seconds(5), [&] {
+    if (publish_confirm_cv_.wait_for(lock, seconds(10), [&] {
         return current_publish_confirmed_ || current_publish_nacked_; })) {
         bool success = current_publish_confirmed_ && !current_publish_nacked_;
         LOG_INFO << "Worker thread: Publish confirmation result: "
