@@ -94,6 +94,11 @@ void HashCrack::getCrackResult(
                 std::string pass(password.get_string().value);
                 result["Data"].append(pass);
             }
+            result["JobPartitionStatuses"] = Json::Value(Json::arrayValue);
+            for (auto parts : doc["workers_done_statuses"].get_array().value) {
+                std::string part(parts.get_string().value);
+                result["JobPartitionStatuses"].append(part);
+            }
             break;
         }
         callback(HttpResponse::newHttpJsonResponse(result));

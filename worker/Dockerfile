@@ -51,14 +51,16 @@ RUN sudo echo "/usr/local/lib" > /etc/ld.so.conf.d/local.conf && \
     sudo ldconfig && \
     sudo echo "LD_LIBRARY_PATH=/usr/local/lib" >> /etc/environment
 
+ENV LD_LIBRARY_PATH=/usr/local/lib
+
 WORKDIR /app/worker
 
 #RUN drogon_ctl create project worker
 
-WORKDIR /app/worker
-
 COPY . /app/worker
 
-RUN cd build && cmake -DCMAKE_BUILD_TYPE=Release -S /app/worker -B /app/worker/build
+RUN cmake -DCMAKE_BUILD_TYPE=Debug -G "Unix Makefiles" -S /app/worker -B /app/worker/build
+
+RUN cmake --build /app/worker/build
 
 CMD ["/app/worker/build/Worker"]

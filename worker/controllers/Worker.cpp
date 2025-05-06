@@ -361,7 +361,16 @@ void Worker::processResult(const ManagerToWorkerDTO &task,
         });
     } else {
         LOG_ERROR << "Worker thread: Failed to publish result for " << task_uuid
-                  << ", part " << part_number << ". Task will be redelivered.";
+                  << ", part " << part_number << ". Task with tag "
+                  << delivery_tag << " will be redelivered.";
+        if (channel_ && channel_->usable()) {
+            channel_->reject(delivery_tag, AMQP::requeue);
+            LOG_INFO << "Worker thread: rejected message with delivery tag "
+                     << delivery_tag;
+        } else {
+            LOG_WARN << "Worker thread: rejecting message with tag "
+                     << delivery_tag << " failed. Channel is not usable.";
+        }
     }
 }
 

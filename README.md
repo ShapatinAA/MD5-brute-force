@@ -4,6 +4,10 @@ This is hash cracker for MD5 type of hash. It uses bruteforce.
 The difference of this program is that it uses RabbitMQ to communicate with workers and guarantees consistency of information (if sending request was a successfull operation) and partition tolerance 
 (if user agrees, that processing of his request will be happening only for some time (300 seconds by default)).
 
+## Architecture
+
+![Architecture](assets/Architecture.svg)
+
 ## Building
 
 To start service just type:
@@ -56,16 +60,56 @@ GET http://127.0.0.1:8848/api/hash/status?requestId={requestId}
 ```
 Response body:
 {
-    "data": []
+    "data": [],
+    "JobPartitionStatuses":["WAITING","WAITING","WAITING","WAITING"],
     "status": "IN_PROGRESS",
 }
 ```
-You'll see final data, when service will have status value as "READY". If network is unreliable or system perfomance is poor you may see "PARTIAL_RESULT" or even "ERROR" statuses, meaning that system got only part of all answers, or timeout fired.
+You'll see final data, when service will have status value as "READY".
 ```
 Response body:
 {
     "data": [aa]
+    "JobPartitionStatuses":["DONE","DONE","DONE","DONE"],
     "status": "READY",
 }
 ```
+If network is unreliable or system perfomance is poor you may see "PARTIAL_RESULT".
+```
+Response body:
+{
+    "data": [aa]
+    "JobPartitionStatuses":["DONE","ERROR","DONE","DONE"],
+    "status": "PARTIAL_RESULT",
+}
+```
+Or even "ERROR" statuses, meaning that system got only part of all answers, or timeout fired.
+```
+Response body:
+{
+    "data": [aa]
+    "JobPartitionStatuses":["ERROR","ERROR","ERROR","ERROR"],
+    "status": "ERROR",
+}
+```
+
+## Configuration
+
+You can configure app by changing files in `docker` and `manager` and `worker` directories.
+
+### To configure RabbitMQ
+
+Change according lines in `doocker/compose.yaml` and `docker/rabbitmq.env`.
+
+After that you need to also bring your changes to `manager/config.json` and `worker/config.json`.
+
+### To configure MongoDB
+
+Change according lines in `doocker/compose.yaml` and `docker/mongodb_config/mongod.conf` and `docker/deployment_scripts/initiate_replica.sh`.
+
+After that you need to also bring your changes to `manager/config.json` and `worker/config.json`.
+
+### Worker and Manager configuration
+
+You can also configure some of the workers and managers parameters in `manager/config.json` and `worker/config.json`.
 

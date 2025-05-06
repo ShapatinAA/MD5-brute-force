@@ -38,6 +38,9 @@ find_package(Drogon CONFIG REQUIRED)
 find_package(amqpcpp CONFIG REQUIRED)
 target_link_libraries(${PROJECT_NAME} debug amqpcpp Drogon::Drogon)
 
+target_include_directories(${PROJECT_NAME} PRIVATE /usr/local/include)
+link_directories(/usr/local/lib)
+
 # ##############################################################################
 
 if (CMAKE_CXX_STANDARD LESS 17)

@@ -52,7 +52,7 @@ RUN curl -OL https://github.com/mongodb/mongo-cxx-driver/releases/download/r4.0.
     tar -xzf mongo-cxx-driver-r4.0.0.tar.gz &&  \
     cd mongo-cxx-driver-r4.0.0/build &&         \
     cmake ..                                    \
-        -DCMAKE_BUILD_TYPE=Debug              \
+        -DCMAKE_BUILD_TYPE=Debug                \
         -DMONGOCXX_OVERRIDE_DEFAULT_INSTALL_PREFIX=OF && \
     cmake --build . &&                          \
     sudo cmake --build . --target install
@@ -70,7 +70,7 @@ RUN sudo echo "/usr/local/lib" > /etc/ld.so.conf.d/local.conf && \
     sudo ldconfig && \
     sudo echo "LD_LIBRARY_PATH=/usr/local/lib" >> /etc/environment
 
-WORKDIR /app/ParallelSystems
+ENV LD_LIBRARY_PATH=/usr/local/lib
 #
 #RUN drogon_ctl create project ParallelSystems
 #
@@ -78,7 +78,9 @@ WORKDIR /app/ParallelSystems
 
 COPY . /app/ParallelSystems
 
-RUN cd build && cmake -DCMAKE_BUILD_TYPE=Release -S /app/ParallelSystems -B /app/ParallelSystems/build
+RUN cmake -DCMAKE_BUILD_TYPE=Debug -G "Unix Makefiles" -S /app/ParallelSystems -B /app/ParallelSystems/build
+
+RUN cmake --build /app/ParallelSystems/build
 #
 #RUN ls /usr/local/lib
 #
