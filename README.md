@@ -74,16 +74,16 @@ Response body:
     "status": "READY",
 }
 ```
-If network is unreliable or system perfomance is poor you may see "PARTIAL_RESULT".
+If network is unreliable or system perfomance is poor you may see "PARTIAL_RESULT", meaning that system got only part of all answers.
 ```
 Response body:
 {
     "data": [aa]
-    "JobPartitionStatuses":["DONE","ERROR","DONE","DONE"],
+    "JobPartitionStatuses":["DONE","ERROR","DONE","WAITING"],
     "status": "PARTIAL_RESULT",
 }
 ```
-Or even "ERROR" statuses, meaning that system got only part of all answers, or timeout fired.
+Or even "ERROR" status, meaning that timeout fired.
 ```
 Response body:
 {
